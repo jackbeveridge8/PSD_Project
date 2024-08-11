@@ -21,7 +21,7 @@ void DoorProximitySensorOperation() {
 
 }
 
-void doorPositionDetection() {
+void DoorPositionDetectionOperation() {
 
 }
 

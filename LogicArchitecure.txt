@@ -100,7 +100,7 @@
 
 	Manual Operation (Button Activation)
         	\\When the Button Activation input is detected
-			\\If the doors are closed or the closing sequence if the doors are open.
+			\\If the doors are closed
 				\\Follow the opening sequence
 			\\If the doors are open
 				\\Follow the closing sequence

@@ -15,45 +15,45 @@
 #define audibleSpeaker 11 //alerts of door status
 #define doorStatusLight 12 //visual alert of door status
 
-//functions to control the input devices
-
+//functions to control the INPUT devices
 void DoorProximitySensorOperation() {
-
+//Function to collect and prepare the data if needed
 }
 
 void DoorPositionDetectionOperation() {
-
+//Function to collect and prepare the data if needed
 }
 
 void HindranceObstacleDetectionOperation() {
-
+//Function to collect and prepare the data if needed
 }
 
 void doorPushButtonOperation() {
-
+//Function to collect and prepare the data if needed
 }
 
 void EmergencyReleaseLevelOperation() {
-
+//Function to collect and prepare the data if needed
 }
 
 void EmergencyStopButtonOperation() {
-
+//Function to collect and prepare the data if needed
 }
 
-//functions to control the output devices
+//functions to control the OUTPUT devices
 void motorOperationOperation() {
-
+//Function to operate the motor and send the correct signal if needed
 }
 void MagLockOperation() {
-
+//Function to operate the mag lock and send the correct signal if needed
 }
 
 void AudibleSpeakerOperation() {
-
+//Function to operate the speaker and send the correct signal if needed
 }
-void DoorStatusLight() {
 
+void DoorStatusLight() {
+//Function to operate the LED Light on door and send the correct signal if needed
 }
 
 //Logic input/output functions
@@ -65,7 +65,8 @@ void SafetyInterlock() {
   //ensures all conditions are safe for the doors to operate 
 }
 
-//Logic Operations
+
+//LOGIC PSD OPERATION FUNCTIONS
 
 void TrainApproaching() {
 
@@ -83,7 +84,7 @@ void EmergencySituations() {
 
 }
 
-void DoorOperation() {
+void TotalDoorOperation() {
 
 }
 
@@ -119,6 +120,8 @@ void loop() {
   digitalWrite(ledPin, LOW);
   // Wait for a second
   delay(1000);
+
+  TotalDoorOperation();
 
   
 }

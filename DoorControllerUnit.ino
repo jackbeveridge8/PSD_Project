@@ -52,7 +52,7 @@ void AudibleSpeakerOperation() {
 //Function to operate the speaker and send the correct signal if needed
 }
 
-void DoorStatusLight() {
+string DoorStatusLight(string Colour) {
 //Function to operate the LED Light on door and send the correct signal if needed
 }
 
@@ -69,11 +69,30 @@ void SafetyInterlock() {
 //LOGIC PSD OPERATION FUNCTIONS
 
 void TrainApproaching() {
-
+  //When the Door Prediction system signals that a train is approaching
+  //And the Door Proximity Sensor detects the train is close enough
+			//Activate the Visual Lights colour green to signal that the doors are about to open.
+      DoorStatusLight("green") //flashing
+	//If the Safety Interlock is confirmed 
+      //And no obstacles are detected by the Hindrance Obstacle Detector
+      //Unlock the doors by deactivating the Door Status Magnetic Lock.
 }
 
 void DoorOpeningSequence() {
-
+  //If the doors are unlocked
+			//Activate the Motor Control to open the doors.
+   		//Activate Visual light to green colour flashing for opening
+	  	//Activate Audible Bell for door opening
+  //Monitor the Door Position Detection to track the door's status during the opening.
+			//Output to console the status
+  //If any obstacle is detected by the Hindrance Obstacle Detector
+			//Stop the motor 
+   		//Trigger the Audible Bell Speaker to alert.
+	  	//Activate Visual light to warning colour (orange?)
+	 		//Continue closing after the obstacle removed
+  //If the door fully opens without hindrance
+			//Signal the system to maintain the open position.
+   		//Visual light colour green steady on
 }
 
 void DoorClosingSequence() {

@@ -84,7 +84,8 @@
    			\\Trigger the Audible Bell Speaker to alert.
 	  		\\Activate Visual light to warning colour (orange?)
    			\\Keep the doors open until the obstacle is cleared and continue closing
-        	\\Once fully closed, activate the Door Status Magnetic Lock to secure the doors.
+        	\\Once fully closed
+			\\activate the Door Status Magnetic Lock to secure the doors.
 
 	Emergency Situations
         	\\If the Emergency Release Mechanism is triggered

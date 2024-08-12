@@ -73,8 +73,8 @@ void TrainApproaching() {
   //And the Door Proximity Sensor detects the train is close enough
 			//Activate the Visual Lights colour green to signal that the doors are about to open.
       DoorStatusLight("green") //flashing
-	//If the Safety Interlock is confirmed 
-      //And no obstacles are detected by the Hindrance Obstacle Detector
+	//If the Safety Interlock Function is confirmed 
+  //And no obstacles are detected by the Hindrance Obstacle Detector
       //Unlock the doors by deactivating the Door Status Magnetic Lock.
 }
 
@@ -86,7 +86,7 @@ void DoorOpeningSequence() {
   //Monitor the Door Position Detection to track the door's status during the opening.
 			//Output to console the status
   //If any obstacle is detected by the Hindrance Obstacle Detector
-			//Stop the motor 
+	    //Stop the motor 
    		//Trigger the Audible Bell Speaker to alert.
 	  	//Activate Visual light to warning colour (orange?)
 	 		//Continue closing after the obstacle removed
@@ -96,15 +96,41 @@ void DoorOpeningSequence() {
 }
 
 void DoorClosingSequence() {
-
+  //Once the Safety Interlock releases
+  //And no obstacles are detected
+      //Activate the Motor Control to close the doors.
+      //Activate visual light to red flashing.
+      //Activate audible bell for door closing
+  //Continuously monitor the Door Position Detection during closure.
+      //Output to console the status
+  //If an obstacle is detected during the closing
+      //Stop the motor
+      //Trigger the Audible Bell Speaker to alert.
+      //Activate Visual light to warning colour (orange?)
+      //Keep the doors open until the obstacle is cleared and continue closing
+  //Once fully closed
+      //activate the Door Magnetic Lock to secure the doors.
 }
 
 void EmergencySituations() {
-
+  //If the Emergency Release Mechanism is triggered
+			//Immediately unlock the doors releasing the maglock
+   		//Open them using the Motor Control or manually pull them open
+	  	//Activate Audible Bell
+	 		//Activate Visual red flashing light
+  //If The Emergency Close Stop Button is triggered
+			//Halt any door movement and keep the door in its current position when pressed.
+   		//Stop Motor
+	  	//Activate Audible Bell
+	 		//Activate Visual red flashing light
 }
 
 void TotalDoorOperation() {
-
+  //When the Button Activation input is detected
+			//If the doors are closed
+				//Follow the opening sequence
+			//If the doors are open
+				//Follow the closing sequence
 }
 
 

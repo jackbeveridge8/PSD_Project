@@ -1,31 +1,59 @@
 // Define the inbuilt Arduino LED pin
 #define ledPin 13
+
 // Input Pin Definitions
-#define doorProximitySensor 2 //detect train door in position of PSD
-#define doorPositionDetection 3 //Detects Door open, close or opening // might be logic function instead of physical device
-#define hindranceObstacleDetection 4 //infared or laser or scales to detect obstacle in oath of door
-#define doorPushButton 5 //Push button on door
-#define emergencyReleaseLever 6 //Emergency Access Device if door malfunctions
-#define emergencyStopButton 7 //emergency stop button if door malfunctions
-#define safetyInterlock 8 //ensures all conditions are safe for the doors to operate // might be logic function instead of physical device
+#define doorProximitySensor 2 //detect train door in position of PSD // Possibly too hard need think of a better way logically
+#define doorPositionLimitSwitchOpen 3 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
+#define doorPositionLimitSwitchClose 4 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
+#define hindranceObstacleDetection 5 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
+#define emergencyStopButton 6 // Emergency stop button if door malfunctions to release the locking mechanism
+
+//pin for fire mode, if off turn everything off flash LEDs
+
+//possible pins for talking to raspberry pi for interface
 
 // Output Pin Definitions
-#define motor 9 //DC or AC motor to control door movement
-#define magLock 10 //locking device of door
-#define audibleSpeaker 11 //alerts of door status
-#define doorStatusLight 12 //visual alert of door status
+#define motorCWSpin 8 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
+#define motorACWSpin 9 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
+#define magLockClose 10 //locking device of door // 2 maglocks one for open one for closed
+#define magLockOpen 11 //locking device of door // 2 maglocks one for open one for closed
+#define audibleSpeaker 12 //alerts of door status
+#define doorStatusLightR 14 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
+#define doorStatusLightG 15 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Green
+#define doorStatusLightY 16 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber 
+#define systemStatusLED 17 //flashing LED to indicate system is working and running, if not flashing that indication that something is wrong
 
-//functions to control the INPUT devices
+
+//add global variables here
+bool doorOpen = false;
+bool doorLocked = true;
+bool obstacleDetected = false;
+
+
+//------------------------------------------------------------
+//***********functions to control the INPUT devices***********
 void DoorProximitySensorOperation() {
 //Function to collect and prepare the data if needed
+
 }
 
 void DoorPositionDetectionOperation() {
-//Function to collect and prepare the data if needed
+  // Collect data from the door position limit switches
+  if (digitalRead(doorPositionLimitSwitchOpen) == HIGH) {
+    doorOpen = true;
+  }
+  if (digitalRead(doorPositionLimitSwitchClose) == HIGH) {
+    doorOpen = false;
+  }
 }
 
 void HindranceObstacleDetectionOperation() {
-//Function to collect and prepare the data if needed
+  // Detect obstacles in the door's path
+  if (digitalRead(hindranceObstacleDetection) == HIGH) {
+    obstacleDetected = true;
+  } else {
+    obstacleDetected = false;
+  }
 }
 
 void doorPushButtonOperation() {
@@ -33,44 +61,59 @@ void doorPushButtonOperation() {
 }
 
 void EmergencyReleaseLevelOperation() {
-//Function to collect and prepare the data if needed
+  if (digitalRead(emergencyStopButton) == HIGH) 
+  {
+    MagLockOperation(false);  // Unlock the door
+    motorOperation(false);    // Stop the motor
+    AudibleSpeakerOperation(true);  // Activate the alarm
+  }
 }
 
-void EmergencyStopButtonOperation() {
-//Function to collect and prepare the data if needed
-}
-
-//functions to control the OUTPUT devices
+//-------------------------------------------------------------
+//***********functions to control the OUTPUT devices***********
 void motorOperationOperation() {
 //Function to operate the motor and send the correct signal if needed
 }
 void MagLockOperation() {
 //Function to operate the mag lock and send the correct signal if needed
+
+//When it gets powered, magnet turns on
+//When power turns off, magnet turns off
 }
 
 void AudibleSpeakerOperation() {
 //Function to operate the speaker and send the correct signal if needed
 }
 
-string DoorStatusLight(string Colour) {
+string DoorStatusLight(String Colour) {
 //Function to operate the LED Light on door and send the correct signal if needed
+  if (Colour == "green")
+  {
+    digitalWrite(doorStatusLight, HIGH);
+  }
 }
 
-//Logic input/output functions
+//possible statemachine process to show which pins on and off 
+
+//--------------------------------------------------
+//***********Logic input/output functions***********
 void DoorPredictionSystem() {
   //variable receiving data from the overall train control system, indicating when a train is approaching.
+  //Signals when the train is approaching the platform.
 }
 
 void SafetyInterlock() {
   //ensures all conditions are safe for the doors to operate 
 }
 
-
-//LOGIC PSD OPERATION FUNCTIONS
+//-------------------------------------------------------
+////***********LOGIC PSD OPERATION FUNCTIONS//***********
 
 void TrainApproaching() {
   //When the Door Prediction system signals that a train is approaching
+    // if DoorPredictionSystem = True
   //And the Door Proximity Sensor detects the train is close enough
+    // if 
 			//Activate the Visual Lights colour green to signal that the doors are about to open.
       DoorStatusLight("green") //flashing
 	//If the Safety Interlock Function is confirmed 
@@ -78,8 +121,10 @@ void TrainApproaching() {
       //Unlock the doors by deactivating the Door Status Magnetic Lock.
 }
 
-void DoorOpeningSequence() {
-  //If the doors are unlocked
+//make method fucntion for unlocking door maglock
+
+void DoorOpeningSequence() { //you can set to close before its close it will lock when close enough 
+  //If the doors are unlocked 
 			//Activate the Motor Control to open the doors.
    		//Activate Visual light to green colour flashing for opening
 	  	//Activate Audible Bell for door opening
@@ -95,7 +140,7 @@ void DoorOpeningSequence() {
    		//Visual light colour green steady on
 }
 
-void DoorClosingSequence() {
+void DoorClosingSequence() { //you can set to close before its close it will lock when close enough 
   //Once the Safety Interlock releases
   //And no obstacles are detected
       //Activate the Motor Control to close the doors.
@@ -126,13 +171,8 @@ void EmergencySituations() {
 }
 
 void TotalDoorOperation() {
-  //When the Button Activation input is detected
-			//If the doors are closed
-				//Follow the opening sequence
-			//If the doors are open
-				//Follow the closing sequence
+  //function to controll the other functions and be called in the main loop?
 }
-
 
 void setup() {
   Serial.begin(9600); // Start serial communication for debugging
@@ -152,21 +192,31 @@ void setup() {
   pinMode(magLock, OUTPUT);
   pinMode(audibleSpeaker, OUTPUT);
   pinMode(doorStatusLight, OUTPUT);
-
 }
 
 // Main loop to control and read the pins
 void loop() {
   // Turn the LED on (HIGH is the voltage level)
-  digitalWrite(ledPin, HIGH);
+  //digitalWrite(ledPin, HIGH);
   // Wait for a second
-  delay(1000);
+  //delay(1000);
   // Turn the LED off by making the voltage LOW
-  digitalWrite(ledPin, LOW);
+  //digitalWrite(ledPin, LOW);
   // Wait for a second
+  //delay(1000);
+
+  digitalWrite(motor, HIGH);
+  digitalWrite(magLock, HIGH);
+  digitalWrite(audibleSpeaker, HIGH);
+  digitalWrite(doorStatusLight, HIGH);
+  delay(1000);
+  digitalWrite(motor, LOW);
+  digitalWrite(magLock, LOW);
+  digitalWrite(audibleSpeaker, LOW);
+  digitalWrite(doorStatusLight, LOW);
   delay(1000);
 
-  TotalDoorOperation();
+  //TotalDoorOperation();
 
   
 }

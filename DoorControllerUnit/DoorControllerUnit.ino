@@ -1,37 +1,44 @@
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+
+const char* ssid = "TelstraA4B191";  // Replace with your WiFi SSID
+const char* password = "3dsxbhme2h";  // Replace with your WiFi password
+
+AsyncWebServer server(80);
+#define debugLED 13 // Specify the GPIO pin number for the LED
+
 // Input Pin Definitions
-#define trainIsApproaching 7 //input to alert train is approaching
-#define doorProximitySensor A0 //detect train door in position of PSD // Possibly too hard need think of a better way logically
-#define doorPositionLimitSwitchOpen A1 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
-#define doorPositionLimitSwitchClose A2 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
-#define hindranceObstacleDetection A3 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
-#define emergencyReleaseButton A4 // Emergency stop button if door malfunctions to release the locking mechanism
-
-//pin for fire mode, if off turn everything off flash LEDs
-
-//possible pins for talking to raspberry pi for interface
+#define trainIsApproaching 12 //input to alert train is approaching
+#define doorProximitySensor 14 //detect train door in position of PSD // Possibly too hard need think of a better way logically
+#define doorPositionLimitSwitchOpen 27 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
+#define doorPositionLimitSwitchClose 26 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
+#define hindranceObstacleDetection 25 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
+#define emergencyReleaseButton 33 // Emergency stop button if door malfunctions to release the locking mechanism
 
 // Output Pin Definitions
-#define motorCWSpin 2 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
-#define motorCCWSpin 3 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
-#define magLockClose 4 //locking device of door // 2 maglocks one for open one for closed
-#define magLockOpen 5 //locking device of door // 2 maglocks one for open one for closed
-#define audibleSpeaker 9 //alerts of door status
-#define doorStatusLightR 10 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
-#define doorStatusLightY 11 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber
-#define doorStatusLightG 12 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Green
-#define systemStatusLED 13 //flashing LED to indicate system is working and running, if not flashing that indication that something is wrong
+#define motorCWSpin 15 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
+#define motorCCWSpin 4 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
+#define magLockClose 5 //locking device of door // 2 maglocks one for open one for closed
+#define magLockOpen 18 //locking device of door // 2 maglocks one for open one for closed
+#define audibleSpeaker 19 //alerts of door status
+#define doorStatusLightR 21 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
+#define doorStatusLightB 22 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber
+#define doorStatusLightG 23 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Green
+#define systemStatusLED 2 //flashing LED to indicate system is working and running, if not flashing that indication that something is wrong
 
 //add global variables here
-//bool doorOpen = false;
-//bool doorClosed = true;
 bool doorOpeningflag = false;
 bool doorClosingflag = false;
-//bool obstacleDetectedflag = false;
-bool trainIsApproachingflag = false; //this will be changed in the PCU interface, eg. signal from Metro
+bool trainIsApproachingFlag = false; //this will be changed in the PCU interface, eg. signal from Metro
+bool doorProximitySensorFlag = false;
+bool hindranceObstacleDetectionFlag = false;
+bool emergencyReleaseButtonFlag = false;
 bool fireModeActiveflag = false;
 unsigned long doorOpenTime = 0;
 const long openDuration = 10000;  // 10 seconds
 int remainingTime = 1;
+bool speakerOn = false;
 
 enum States {
   IDLE,
@@ -50,44 +57,52 @@ States currentState = IDLE;
 //Function Prototypes
 void NextState(States newState);
 void StateMachine();
-void FlashLight(int pin);
+void FlashLight(int colour);
+void TurnOnLight(int colour);
 void SpeakerAlert();
 bool SafetyInterlock();
 bool ObstacleCleared();
+void wifiSetup();
+void setInputValue(int pin, String value);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // Input Pins
-  pinMode(trainIsApproaching, INPUT_PULLUP); //7
-  pinMode(doorProximitySensor, INPUT_PULLUP); //A0
-  pinMode(doorPositionLimitSwitchOpen, INPUT_PULLUP); //A1
-  pinMode(doorPositionLimitSwitchClose, INPUT_PULLUP); //A2
-  pinMode(hindranceObstacleDetection, INPUT_PULLUP); //A3
-  pinMode(emergencyReleaseButton, INPUT_PULLUP); //A4
+  pinMode(trainIsApproaching, INPUT);
+  pinMode(doorProximitySensor, INPUT);
+  pinMode(doorPositionLimitSwitchOpen, INPUT_PULLUP);
+  pinMode(doorPositionLimitSwitchClose, INPUT_PULLUP);
+  pinMode(hindranceObstacleDetection, INPUT);
+  pinMode(emergencyReleaseButton, INPUT);
 
-  // Output Pin Definitions //2-5, 9-13
+  // Output Pin Definitions
   pinMode(motorCWSpin, OUTPUT);
   pinMode(motorCCWSpin, OUTPUT);
   pinMode(magLockClose, OUTPUT);
   pinMode(magLockOpen, OUTPUT);
-
-  pinMode(audibleSpeaker, OUTPUT);
+  ledcAttach(audibleSpeaker, 1000, 8);
   pinMode(doorStatusLightR, OUTPUT);
-  pinMode(doorStatusLightY, OUTPUT);
+  pinMode(doorStatusLightB, OUTPUT);
   pinMode(doorStatusLightG, OUTPUT);
   pinMode(systemStatusLED, OUTPUT);
+
+  //debug LED pin
+  pinMode(debugLED, OUTPUT);
+  digitalWrite(debugLED, LOW);  // Start with LED off
 
   //Output Pins Initial values
   digitalWrite(motorCWSpin, LOW);
   digitalWrite(motorCCWSpin, LOW);
   digitalWrite(magLockClose, HIGH);
   digitalWrite(magLockOpen, LOW);
-  digitalWrite(audibleSpeaker, LOW);
-  digitalWrite(doorStatusLightR, HIGH);
-  digitalWrite(doorStatusLightY, LOW);
+  ledcWrite(audibleSpeaker, 0);
+  digitalWrite(doorStatusLightR, LOW);
+  digitalWrite(doorStatusLightB, LOW);
   digitalWrite(doorStatusLightG, LOW);
   digitalWrite(systemStatusLED, LOW);
+
+  wifiSetup();
 
 }
 
@@ -96,41 +111,231 @@ void loop() {
   // put your main code here, to run repeatedly:
   StateMachine();
 
-  if (fireModeActiveflag == true){
+  if (fireModeActiveflag){
     NextState(FIRE_MODE);
   }
 
   if (digitalRead(trainIsApproaching) == HIGH){
     digitalWrite(systemStatusLED, HIGH);
-    trainIsApproachingflag = true;
+    trainIsApproachingFlag = true;
   }
   else {
     digitalWrite(systemStatusLED, LOW);
-    trainIsApproachingflag = false;
+    trainIsApproachingFlag = false;
   }
   
 }
+
+void wifiSetup(){
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected to WiFi");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+
+  // Configure server routes
+  server.on("/setInput", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (request->hasParam("pin") && request->hasParam("value")) {
+      int pin = request->getParam("pin")->value().toInt();
+      String value = request->getParam("value")->value();
+      setInputValue(pin, value);
+      request->send(200, "text/plain", "Input set");
+    } else {
+      request->send(400, "text/plain", "Bad Request");
+    }
+  });
+
+  server.on("/getInputStates", HTTP_GET, [](AsyncWebServerRequest *request){
+    String jsonResponse = getInputStatesJSON();
+    request->send(200, "application/json", jsonResponse);
+  });
+
+
+  server.on("/getState", HTTP_GET, [](AsyncWebServerRequest *request){
+    String stateStr = getStateString();
+    request->send(200, "text/plain", stateStr);
+  });
+
+  server.on("/toggleDebugLED", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (request->hasParam("state")) {
+      String state = request->getParam("state")->value();
+      if (state == "ON") {
+        digitalWrite(debugLED, HIGH);
+      } else if (state == "OFF") {
+        digitalWrite(debugLED, LOW);
+      } else if (state == "TOGGLE") {
+        digitalWrite(debugLED, !digitalRead(debugLED));  // Toggle LED state
+      }
+      request->send(200, "text/plain", "Debug LED state changed");
+    } else {
+      request->send(400, "text/plain", "Bad Request: 'state' parameter missing");
+    }
+  });
+
+  server.on("/getDebugLEDState", HTTP_GET, [](AsyncWebServerRequest *request){
+  bool ledState = digitalRead(debugLED);
+  String response = ledState ? "ON" : "OFF";
+  request->send(200, "text/plain", response);
+  });
+
+
+  // Start server
+  server.begin();
+  Serial.println("HTTP server started");
+}
+
+void setInputValue(int pin, String value) {
+  bool val;
+  if (value == "HIGH") {
+      val = true;
+  } else {
+      val = false;
+  }
+
+  switch (pin) {
+    case 13:
+      trainIsApproachingFlag = val;
+      break;
+    case 14:
+      doorProximitySensorFlag = val;
+      break;
+    case 25:
+      hindranceObstacleDetectionFlag = val;
+      break;
+    case 33:
+      emergencyReleaseButtonFlag = val;
+      break;
+    default:
+      Serial.println("Invalid pin");
+      break;
+  }
+  Serial.printf("Input %d set to %s\n", pin, value.c_str());
+}
+
+String getStateString() {
+  switch (currentState) {
+    case IDLE:
+      return "IDLE";
+    case TRAIN_APPROACHING:
+      return "TRAIN_APPROACHING";
+    case DOOR_OPENING:
+      return "DOOR_OPENING";
+    case DOOR_IS_OPEN:
+      return "DOOR_IS_OPEN";
+    case DOOR_CLOSING:
+      return "DOOR_CLOSING";
+    case OBSTACLE_DETECTED:
+      return "OBSTACLE_DETECTED";
+    case EMERGENCY_OPEN:
+      return "EMERGENCY_OPEN";
+    case EMERGENCY_CLOSE:
+      return "EMERGENCY_CLOSE";
+    case FIRE_MODE:
+      return "FIRE_MODE";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+String getInputStatesJSON() {
+  // Read hardware input states
+  bool trainIsApproachingHardware = digitalRead(trainIsApproaching) == HIGH;
+  bool doorProximitySensorHardware = digitalRead(doorProximitySensor) == HIGH;
+  bool hindranceObstacleDetectionHardware = digitalRead(hindranceObstacleDetection) == HIGH;
+  bool emergencyReleaseButtonHardware = digitalRead(emergencyReleaseButton) == HIGH;
+
+  // Create a JSON-formatted string
+  String json = "{";
+  json += "\"trainIsApproaching\": {\"hardware\":" + String(trainIsApproachingHardware ? "true" : "false") +
+          ", \"software\":" + String(trainIsApproachingFlag ? "true" : "false") + "},";
+  json += "\"doorProximitySensor\": {\"hardware\":" + String(doorProximitySensorHardware ? "true" : "false") +
+          ", \"software\":" + String(doorProximitySensorFlag ? "true" : "false") + "},";
+  json += "\"hindranceObstacleDetection\": {\"hardware\":" + String(hindranceObstacleDetectionHardware ? "true" : "false") +
+          ", \"software\":" + String(hindranceObstacleDetectionFlag ? "true" : "false") + "},";
+  json += "\"emergencyReleaseButton\": {\"hardware\":" + String(emergencyReleaseButtonHardware ? "true" : "false") +
+          ", \"software\":" + String(emergencyReleaseButtonFlag ? "true" : "false") + "}";
+  json += "}";
+
+  return json;
+}
+
 
 void NextState(States newState) {
   currentState = newState;
 }
 
-void FlashLight(int pin) {
+void FlashLight(int colour) {
   // Toggle the light for flashing
   static unsigned long lastFlashTime = 0;
   if (millis() - lastFlashTime >= 500) {
     lastFlashTime = millis();
-    digitalWrite(pin, !digitalRead(pin)); // Toggle light state
+    if (colour == 1) {
+      digitalWrite(doorStatusLightR, !digitalRead(doorStatusLightR));
+      digitalWrite(doorStatusLightG, LOW);
+      digitalWrite(doorStatusLightB, LOW);
+    }
+    else if (colour == 2) {
+      digitalWrite(doorStatusLightR, LOW);
+      digitalWrite(doorStatusLightG, !digitalRead(doorStatusLightG));
+      digitalWrite(doorStatusLightB, LOW);
+
+    }
+    else if (colour == 3) {
+      digitalWrite(doorStatusLightR, LOW);
+      digitalWrite(doorStatusLightG, LOW);
+      digitalWrite(doorStatusLightB, !digitalRead(doorStatusLightB));
+    }
+    else {
+      digitalWrite(doorStatusLightR, LOW);
+      digitalWrite(doorStatusLightG, LOW);
+      digitalWrite(doorStatusLightB, LOW);
+    }
   } 
+}
+
+void TurnOnLight(int colour) {
+  if (colour == 1) {
+    digitalWrite(doorStatusLightR, HIGH);
+    digitalWrite(doorStatusLightG, LOW);
+    digitalWrite(doorStatusLightB, LOW);
+  }
+  else if (colour == 2) {
+    digitalWrite(doorStatusLightR, LOW);
+    digitalWrite(doorStatusLightG, HIGH);
+    digitalWrite(doorStatusLightB, LOW);
+
+  }
+  else if (colour == 3) {
+    digitalWrite(doorStatusLightR, LOW);
+    digitalWrite(doorStatusLightG, LOW);
+    digitalWrite(doorStatusLightB, HIGH);
+  }
+  else {
+    digitalWrite(doorStatusLightR, LOW);
+    digitalWrite(doorStatusLightG, LOW);
+    digitalWrite(doorStatusLightB, LOW);
+  }
 }
 
 void SpeakerAlert() {
   // Toggle the speaker to high
   // need more complex logic than simple high command such as specific frequency to omit
   static unsigned long lastTime = 0;
-  if (millis() - lastTime >= 1000) {
+  if (millis() - lastTime >= 500) {
     lastTime = millis();
-    digitalWrite(audibleSpeaker, !digitalRead(audibleSpeaker)); // Toggle speaker for half second increments
+    if (speakerOn == false) {
+      ledcWrite(audibleSpeaker, 128);
+      speakerOn = true;
+    } else {
+      ledcWrite(audibleSpeaker, 0);
+      speakerOn = false;
+    }
+    
   }
 }
 
@@ -138,7 +343,7 @@ bool SafetyInterlock() {
   //include all safety checks here before door operation can commence
 
   // Check if there's an obstacle detected
-  if (digitalRead(hindranceObstacleDetection) == HIGH) {
+  if (digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true) {
     Serial.println("Safety interlock: Obstacle detected, door cannot operate.");
     return false;  // Obstacle detected, cannot proceed
   }
@@ -149,7 +354,7 @@ bool SafetyInterlock() {
     return false; 
   }
 
-  if (digitalRead(emergencyReleaseButton) == HIGH) {
+  if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true) {
   Serial.println("Safety interlock: Emergency release activated.");
   return false;  // Emergency release prevents door operation
   }
@@ -161,7 +366,7 @@ bool SafetyInterlock() {
 
 bool ObstacleCleared(){
   //check obstacle is removed somehow
-  if (digitalRead(hindranceObstacleDetection) == LOW){
+  if (digitalRead(hindranceObstacleDetection) == LOW || hindranceObstacleDetectionFlag == false){
     return true;
   }
 }
@@ -175,43 +380,43 @@ void StateMachine() {
         //doorClosed = true;
         //doorOpen = false;
         doorClosingflag = false;
-        digitalWrite(doorStatusLightR, HIGH);
+        TurnOnLight(1);
 
       //How to get to next state
         //if alert from system detects train is approaching change to train approaching state
         //if emergency release button is detected, move to emergency open state
-      if (trainIsApproachingflag == true){
+      if (trainIsApproachingFlag == true){
         NextState(TRAIN_APPROACHING);
         Serial.println(millis());
         Serial.println("Train Approaching");
-        digitalWrite(doorStatusLightR, LOW);
+        TurnOnLight(0);
       }
-      else if (digitalRead(emergencyReleaseButton) == HIGH){
+      else if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true){
         NextState(EMERGENCY_OPEN);
         Serial.println(millis());
         Serial.println("Emergency Open");
-        digitalWrite(doorStatusLightR, LOW);
+        TurnOnLight(0);
       }
       break;
 
     case TRAIN_APPROACHING:
       //Do in this state
         //Flash Light Amber
-      FlashLight(doorStatusLightY);
+      FlashLight(3);
 
       //How to get to next state
         //if proximity sensor is high for train in position
         //and safety interlock determines everything is all safe
         //trigger Door Opening State
-      if (digitalRead(emergencyReleaseButton) == HIGH){
+      if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true){
         NextState(EMERGENCY_OPEN);
         Serial.println(millis());
         Serial.println("Emergency Open 2");
-        digitalWrite(doorStatusLightY, LOW);
+        TurnOnLight(0);
       }
-      else if ((digitalRead(doorProximitySensor) == HIGH) && (SafetyInterlock() == true)){
+      else if ((digitalRead(doorProximitySensor) == HIGH || doorProximitySensorFlag == true) && (SafetyInterlock() == true)){
         //need to add some delay to make sure the train is in the correct position
-        digitalWrite(doorStatusLightY, LOW);
+        TurnOnLight(0);
         NextState(DOOR_OPENING);
         Serial.println(millis());
         Serial.println("Door is Opening");
@@ -227,7 +432,7 @@ void StateMachine() {
         //check for obstacles
       digitalWrite(magLockClose, LOW);//disengages power to the lock
       digitalWrite(motorCWSpin, HIGH);//open the doors
-      FlashLight(doorStatusLightG);//signal Door is opening flashing green light
+      FlashLight(2);//signal Door is opening flashing green light
       SpeakerAlert();//Alert audibly that doors are opening
       doorOpeningflag = true;
 
@@ -242,22 +447,22 @@ void StateMachine() {
         NextState(DOOR_IS_OPEN);
         Serial.println(millis());
         Serial.println("Door is Open: waiting 10 seconds for passengers to board");
-        digitalWrite(doorStatusLightG, LOW);
-        digitalWrite(audibleSpeaker, LOW);
+        TurnOnLight(0);
+        ledcWrite(audibleSpeaker, 0);
       }
-      else if(digitalRead(hindranceObstacleDetection) == HIGH){
+      else if(digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true){
         NextState(OBSTACLE_DETECTED);
         Serial.println(millis());
         Serial.println("Obstacle Detected");
-        digitalWrite(doorStatusLightG, LOW);
-        digitalWrite(audibleSpeaker, LOW);
+        TurnOnLight(0);
+        ledcWrite(audibleSpeaker, 0);
       }
       break;
 
     case DOOR_IS_OPEN:
       //Do in this state
        //Make door status light solid Green;
-      digitalWrite(doorStatusLightG, HIGH);
+      TurnOnLight(2);
       //doorOpen = true;
       //doorClosed = false;
       doorOpeningflag = false;
@@ -275,11 +480,11 @@ void StateMachine() {
         remainingTime = remainingTime + 1;
       }*/
 
-      if (digitalRead(emergencyReleaseButton) == HIGH){
+      if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true){
         NextState(EMERGENCY_CLOSE);
         Serial.println(millis());
         Serial.println("Emergency Close");
-        digitalWrite(doorStatusLightG, LOW);
+        TurnOnLight(0);
       }
       else if (millis() - doorOpenTime >= openDuration) {
         NextState(DOOR_CLOSING);  // Transition to closing state after 5 seconds
@@ -287,7 +492,7 @@ void StateMachine() {
         remainingTime = 0;
         Serial.println(millis());
         Serial.println("Door is Closing");
-        digitalWrite(doorStatusLightG, LOW);
+        TurnOnLight(0);
       }
       break;
 
@@ -297,7 +502,7 @@ void StateMachine() {
         //unlock maglock
       digitalWrite(magLockOpen, LOW);//disengages power of end locks to unlock the lock so door can move
       digitalWrite(motorCCWSpin, HIGH); //power motor to close doors
-      FlashLight(doorStatusLightR); //visualy alert door is closing with flashing red light
+      FlashLight(1); //visualy alert door is closing with flashing red light
       SpeakerAlert(); //Audibly alert door is closing
       doorClosingflag = true;
 
@@ -311,14 +516,14 @@ void StateMachine() {
         Serial.println(millis());
         Serial.println("Door is closed back to IDLE");
         digitalWrite(doorStatusLightR, LOW);
-        digitalWrite(audibleSpeaker, LOW);
+        ledcWrite(audibleSpeaker, 0);
       }
-      else if(digitalRead(hindranceObstacleDetection) == HIGH){
+      else if(digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true){
         NextState(OBSTACLE_DETECTED);
         Serial.println(millis());
         Serial.println("Obstacle Detected 2");
-        digitalWrite(doorStatusLightR, LOW);
-        digitalWrite(audibleSpeaker, LOW);
+        TurnOnLight(0);
+        ledcWrite(audibleSpeaker, 0);
       }
       break;
 
@@ -327,12 +532,12 @@ void StateMachine() {
       digitalWrite(motorCWSpin, LOW); //power off the motor
       digitalWrite(motorCCWSpin, LOW); //power off the motor
       SpeakerAlert(); //Audibly alert Obstacle is in way
-      FlashLight(doorStatusLightY); //flash amber light
+      FlashLight(3); //flash amber light
 
       //How to get to next state
       if (ObstacleCleared()){
-        digitalWrite(doorStatusLightY, LOW);
-        digitalWrite(audibleSpeaker, LOW);
+        digitalWrite(doorStatusLightB, LOW);
+        ledcWrite(audibleSpeaker, 0);
         if (doorOpeningflag == true){
           NextState(DOOR_OPENING);
           Serial.println(millis());
@@ -356,7 +561,7 @@ void StateMachine() {
         //check for obstacles
       digitalWrite(magLockClose, LOW);//disengages power to the lock
       digitalWrite(motorCWSpin, HIGH);//open the doors
-      FlashLight(doorStatusLightG);//signal Door is opening flashing green light
+      FlashLight(2);//signal Door is opening flashing green light
       SpeakerAlert();//Alert audibly that doors are opening
       doorOpeningflag = true;
 
@@ -372,7 +577,7 @@ void StateMachine() {
         Serial.println(millis());
         Serial.println("Door is open after emergency release pressed");
         digitalWrite(doorStatusLightG, LOW);
-        digitalWrite(audibleSpeaker, LOW);
+        ledcWrite(audibleSpeaker, 0);
       }
       /*else if(digitalRead(hindranceObstacleDetection) == HIGH){
         NextState(OBSTACLE_DETECTED);
@@ -387,7 +592,7 @@ void StateMachine() {
         //unlock maglock
       digitalWrite(magLockOpen, LOW);//disengages power of end locks to unlock the lock so door can move
       digitalWrite(motorCCWSpin, HIGH); //power motor to close doors
-      FlashLight(doorStatusLightR); //visualy alert door is closing with flashing red light
+      FlashLight(1); //visualy alert door is closing with flashing red light
       SpeakerAlert(); //Audibly alert door is closing
       doorClosingflag = true;
 
@@ -401,7 +606,7 @@ void StateMachine() {
         Serial.println(millis());
         Serial.println("Door is closing after Emergency Release pressed");
         digitalWrite(doorStatusLightR, LOW);
-        digitalWrite(audibleSpeaker, LOW);
+        ledcWrite(audibleSpeaker, 0);
       }
       /*else if(digitalRead(hindranceObstacleDetection) == HIGH){
         NextState(OBSTACLE_DETECTED);
@@ -416,24 +621,9 @@ void StateMachine() {
       digitalWrite(magLockOpen, LOW);
       digitalWrite(magLockClose, LOW);
       SpeakerAlert();
-      FlashLight(doorStatusLightR);
+      FlashLight(1);
 
       //How to get to next state
       break;
   }
 }
-
-/* DOOR POSITION FOR EACH STATE
-Door Fully Open:
-doorPositionLimitSwitchOpen = HIGH A1
-doorPositionLimitSwitchClose = LOW A2
-
-Door Fully Closed:
-doorPositionLimitSwitchOpen = LOW
-doorPositionLimitSwitchClose = HIGH
-
-Door In Motion:
-doorPositionLimitSwitchOpen = LOW
-doorPositionLimitSwitchClose = LOW
-*/
-

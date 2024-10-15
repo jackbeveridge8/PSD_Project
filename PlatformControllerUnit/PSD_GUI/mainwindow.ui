@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>PSD Control Panel</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">#MainWindow {
+	background-color: white;
+}</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <widget class="QWidget" name="Background" native="true">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>800</width>
+      <height>601</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#Background {
+	Background-color: white;
+}</string>
+    </property>
+    <widget class="QWidget" name="DoorDisplayWidget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>90</y>
+       <width>371</width>
+       <height>151</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#DoorDisplayWidget {
+	Background-color: #f3e2ce;
+	border-radius: 10px;
+}</string>
+     </property>
+     <widget class="QLabel" name="txtDoorState">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>181</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Helvetica Neue</family>
+        <pointsize>14</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">#txtDoorState {
+	color: black;
+}</string>
+      </property>
+      <property name="text">
+       <string>Door State Display</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblCurrentState">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>50</y>
+        <width>231</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Helvetica Neue</family>
+        <pointsize>24</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">#lblCurrentState {
+	color: black;
+}</string>
+      </property>
+      <property name="text">
+       <string>CLOSED</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+     <widget class="QWidget" name="CircleLightStatus" native="true">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>100</y>
+        <width>30</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">#CircleLightStatus {
+	background-color: red;
+	border-radius: 15px;
+}
+</string>
+      </property>
+     </widget>
+     <zorder>CircleLightStatus</zorder>
+     <zorder>lblCurrentState</zorder>
+     <zorder>txtDoorState</zorder>
+    </widget>
+    <widget class="QWidget" name="TopBanner" native="true">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>801</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#TopBanner {
+	Background-color: white;
+}</string>
+     </property>
+     <widget class="QLabel" name="label_2">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>10</y>
+        <width>411</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Helvetica Neue</family>
+        <pointsize>48</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">#label_2 {
+	color: black;
+}</string>
+      </property>
+      <property name="text">
+       <string>PSD Control Panel</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QPushButton" name="btnTrainApproaching">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>280</y>
+       <width>191</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#btnTrainApproaching {
+    background-color: rgb(237, 123, 1); 
+    color: white; 
+    border-radius: 10px;
+}
+
+#btnTrainApproaching:hover {
+    background-color: rgb(163, 85, 2); 
+}
+
+#btnTrainApproaching:pressed {
+    background-color: rgb(107, 55, 0); 
+}</string>
+     </property>
+     <property name="text">
+      <string>TrainApproaching</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnDoorProximitySensor">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>330</y>
+       <width>191</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#btnDoorProximitySensor {
+    background-color: rgb(237, 123, 1); 
+    color: white; 
+    border-radius: 10px;
+}
+
+#btnDoorProximitySensor:hover {
+    background-color: rgb(163, 85, 2); 
+}
+
+#btnDoorProximitySensor:pressed {
+    background-color: rgb(107, 55, 0); 
+}</string>
+     </property>
+     <property name="text">
+      <string>DoorProximitySensor</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnHindranceObstacle">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>380</y>
+       <width>191</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#btnHindranceObstacle {
+    background-color: rgb(237, 123, 1); 
+    color: white; 
+    border-radius: 10px;
+}
+
+#btnHindranceObstacle:hover {
+    background-color: rgb(163, 85, 2); 
+}
+
+#btnHindranceObstacle:pressed {
+    background-color: rgb(107, 55, 0); 
+}</string>
+     </property>
+     <property name="text">
+      <string>HindranceObstacleDetetction</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnEmergencyRelease">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>430</y>
+       <width>191</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#btnEmergencyRelease {
+    background-color: rgb(237, 123, 1); 
+    color: white; 
+    border-radius: 10px;
+}
+
+#btnEmergencyRelease:hover {
+    background-color: rgb(163, 85, 2); 
+}
+
+#btnEmergencyRelease:pressed {
+    background-color: rgb(107, 55, 0); 
+}</string>
+     </property>
+     <property name="text">
+      <string>EmergencyRelease</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblTrainIsApproachingState">
+     <property name="geometry">
+      <rect>
+       <x>240</x>
+       <y>290</y>
+       <width>58</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lblTrainIsApproachingState {
+	color: black;
+}</string>
+     </property>
+     <property name="text">
+      <string>false</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblDoorProximitySensorState">
+     <property name="geometry">
+      <rect>
+       <x>240</x>
+       <y>340</y>
+       <width>58</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lblDoorProximitySensorState {
+	color: black;
+}</string>
+     </property>
+     <property name="text">
+      <string>false</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblHindranceObstacleState">
+     <property name="geometry">
+      <rect>
+       <x>240</x>
+       <y>390</y>
+       <width>58</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lblHindranceObstacleState {
+	color: black;
+}</string>
+     </property>
+     <property name="text">
+      <string>false</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblEmergencyReleaseState">
+     <property name="geometry">
+      <rect>
+       <x>240</x>
+       <y>440</y>
+       <width>58</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lblEmergencyReleaseState {
+	color: black;
+}</string>
+     </property>
+     <property name="text">
+      <string>false</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnToggleDebugLED">
+     <property name="geometry">
+      <rect>
+       <x>610</x>
+       <y>290</y>
+       <width>161</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#btnToggleDebugLED {
+    background-color: rgb(237, 123, 1); 
+    color: white; 
+    border-radius: 10px;
+}
+
+#btnToggleDebugLED:hover {
+    background-color: rgb(163, 85, 2); 
+}
+
+#btnToggleDebugLED:pressed {
+    background-color: rgb(107, 55, 0); 
+}</string>
+     </property>
+     <property name="text">
+      <string>Toggle Debug LED</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="DoorDisplayWidget_2" native="true">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>95</y>
+       <width>371</width>
+       <height>151</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#DoorDisplayWidget_2 {
+	Background-color: rgba(209, 207, 207,50);
+	border-radius: 10px;
+}</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="TopBanner_2" native="true">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>5</y>
+       <width>801</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#TopBanner_2 {
+	Background-color: rgba(209, 207, 207,50);
+}</string>
+     </property>
+    </widget>
+    <zorder>btnTrainApproaching</zorder>
+    <zorder>btnDoorProximitySensor</zorder>
+    <zorder>btnHindranceObstacle</zorder>
+    <zorder>btnEmergencyRelease</zorder>
+    <zorder>lblTrainIsApproachingState</zorder>
+    <zorder>lblDoorProximitySensorState</zorder>
+    <zorder>lblHindranceObstacleState</zorder>
+    <zorder>lblEmergencyReleaseState</zorder>
+    <zorder>btnToggleDebugLED</zorder>
+    <zorder>DoorDisplayWidget_2</zorder>
+    <zorder>DoorDisplayWidget</zorder>
+    <zorder>TopBanner_2</zorder>
+    <zorder>TopBanner</zorder>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

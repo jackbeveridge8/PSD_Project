@@ -127,11 +127,10 @@ void MainWindow::updateState() {
         if (reply->error() == QNetworkReply::NoError) {
             QString state = QString::fromUtf8(reply->readAll());
             if (state == "IDLE") {
-                ui->DoorsClosingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsClosedWidget->setStyleSheet("background-color: #3d5466; border-radius: 10px;");
-                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                clearWidgetColours();
                 ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsOfflineWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsClosedWidget->setStyleSheet("background-color: #3d5466; border-radius: 10px;");
                 if (doorProximitySensor) {
                     ui->TrainDepartWidget->setStyleSheet("background-color: #8b7158; border-radius: 10px;");
                     ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
@@ -141,55 +140,105 @@ void MainWindow::updateState() {
                     ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
                 }
             } else if (state == "TRAIN_APPROACHING") {
-                ui->TrainApproachingWidget->setStyleSheet("background-color: #3d5466; border-radius: 10px;");
+                clearWidgetColours();
+                ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
                 ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsClosedWidget->setStyleSheet("background-color: #3d5466; border-radius: 10px;");
+                ui->TrainApproachingWidget->setStyleSheet("background-color: #3d5466; border-radius: 10px;");
             } else if (state == "DOOR_OPENING") {
-                ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                clearWidgetColours();
                 ui->DoorsOpeningWidget->setStyleSheet("background-color: #8b8958; border-radius: 10px;");
-                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->TrainPresentWidget->setStyleSheet("background-color: #4d8458; border-radius: 10px;");
+                if (!emergencyRelease && doorProximitySensor) {
+                    ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                    ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                    ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                    ui->TrainPresentWidget->setStyleSheet("background-color: #4d8458; border-radius: 10px;");
+                }
             } else if (state == "DOOR_IS_OPEN") {
-                ui->DoorsOpeningWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                clearWidgetColours();
+                //ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
                 ui->DoorsOpenWidget->setStyleSheet("background-color: #4d8458; border-radius: 10px;");
-                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsOfflineWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                if (!emergencyRelease && doorProximitySensor) {
+                    ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                    ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                    ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                    ui->TrainPresentWidget->setStyleSheet("background-color: #4d8458; border-radius: 10px;");
+                }
             } else if (state == "DOOR_CLOSING") {
-                ui->DoorsOpenWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                clearWidgetColours();
                 ui->DoorsClosingWidget->setStyleSheet("background-color: #8b7158; border-radius: 10px;");
-                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                if (!emergencyRelease && doorProximitySensor) {
+                    ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                    ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                    ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                    ui->TrainPresentWidget->setStyleSheet("background-color: #4d8458; border-radius: 10px;");
+                }
             } else if (state == "OBSTACLE_DETECTED") {
+                clearWidgetColours();
+                //ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
                 ui->DoorsObstructedWidget->setStyleSheet("background-color: #915252; border-radius: 10px;");
+                ui->TrainPresentWidget->setStyleSheet("background-color: #4d8458; border-radius: 10px;");
             } else if (state == "EMERGENCY_OPEN") {
-                ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                clearWidgetColours();
+                //ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
                 ui->DoorsOpeningWidget->setStyleSheet("background-color: #915252; border-radius: 10px;");
-                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else if (state == "EMERGENCY_CLOSE") {
-                ui->DoorsOpeningWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                clearWidgetColours();
+                //ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
                 ui->DoorsClosingWidget->setStyleSheet("background-color: #915252; border-radius: 10px;");
-                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else if (state == "FIRE_MODE") {
+                clearWidgetColours();
+                //ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                //ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
                 ui->DoorsOfflineWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
-                ui->DoorsClosingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsOpeningWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsOpenWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else {
+                clearWidgetColours();
+                ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
                 ui->DoorsOfflineWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
-                ui->DoorsClosingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsOpeningWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsOpenWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             }
         } else {
+            clearWidgetColours();
+            ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+            ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+            ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+            ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             ui->DoorsOfflineWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
-            ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             qDebug() << "Error:" << reply->errorString();
         }
         reply->deleteLater();
     });
+}
+
+void MainWindow::clearWidgetColours() {
+    ui->DoorsClosingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+    ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+    ui->DoorsOfflineWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+    ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+    ui->DoorsOpeningWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+    ui->DoorsOpenWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+    //ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+    //ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+    //ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+    //ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+
 }
 
 

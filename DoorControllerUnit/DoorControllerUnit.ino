@@ -9,8 +9,6 @@ AsyncWebServer server(80);
 #define debugLED 13 // Specify the GPIO pin number for the LED
 
 // Input Pin Definitions
-#define trainIsApproaching 12 //input to alert train is approaching
-#define doorProximitySensor 14 //detect train door in position of PSD // Possibly too hard need think of a better way logically
 #define doorPositionLimitSwitchOpen 27 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
 #define doorPositionLimitSwitchClose 26 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
 #define hindranceObstacleDetection 25 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
@@ -69,8 +67,6 @@ void setup() {
   Serial.begin(115200);
 
   // Input Pins
-  pinMode(trainIsApproaching, INPUT);
-  pinMode(doorProximitySensor, INPUT);
   pinMode(doorPositionLimitSwitchOpen, INPUT_PULLUP);
   pinMode(doorPositionLimitSwitchClose, INPUT_PULLUP);
   pinMode(hindranceObstacleDetection, INPUT);
@@ -113,15 +109,6 @@ void loop() {
 
   if (fireModeActiveflag){
     NextState(FIRE_MODE);
-  }
-
-  if (digitalRead(trainIsApproaching) == HIGH){
-    digitalWrite(systemStatusLED, HIGH);
-    trainIsApproachingFlag = true;
-  }
-  else {
-    digitalWrite(systemStatusLED, LOW);
-    trainIsApproachingFlag = false;
   }
   
 }
@@ -168,10 +155,9 @@ void wifiSetup(){
         digitalWrite(debugLED, HIGH);
       } else if (state == "OFF") {
         digitalWrite(debugLED, LOW);
-      } else if (state == "TOGGLE") {
-        digitalWrite(debugLED, !digitalRead(debugLED));  // Toggle LED state
       }
       request->send(200, "text/plain", "Debug LED state changed");
+      Serial.println(state);
     } else {
       request->send(400, "text/plain", "Bad Request: 'state' parameter missing");
     }
@@ -198,7 +184,7 @@ void setInputValue(int pin, String value) {
   }
 
   switch (pin) {
-    case 13:
+    case 12:
       trainIsApproachingFlag = val;
       break;
     case 14:
@@ -209,6 +195,9 @@ void setInputValue(int pin, String value) {
       break;
     case 33:
       emergencyReleaseButtonFlag = val;
+      break;
+    case 1:
+      fireModeActiveflag = val;
       break;
     default:
       Serial.println("Invalid pin");
@@ -243,26 +232,19 @@ String getStateString() {
 }
 
 String getInputStatesJSON() {
-  // Read hardware input states
-  bool trainIsApproachingHardware = digitalRead(trainIsApproaching) == HIGH;
-  bool doorProximitySensorHardware = digitalRead(doorProximitySensor) == HIGH;
-  bool hindranceObstacleDetectionHardware = digitalRead(hindranceObstacleDetection) == HIGH;
-  bool emergencyReleaseButtonHardware = digitalRead(emergencyReleaseButton) == HIGH;
+    // Create a JSON-formatted string
+    String json = "{";
+    json += "\"trainIsApproaching\": {\"software\":" + String(trainIsApproachingFlag ? "true" : "false") + "},";
+    json += "\"doorProximitySensor\": {\"software\":" + String(doorProximitySensorFlag ? "true" : "false") + "},";
+    json += "\"hindranceObstacleDetection\": {\"hardware\":" + String(digitalRead(hindranceObstacleDetection) == HIGH ? "true" : "false") +
+            ", \"software\":" + String(hindranceObstacleDetectionFlag ? "true" : "false") + "},";
+    json += "\"emergencyReleaseButton\": {\"hardware\":" + String(digitalRead(emergencyReleaseButton) == HIGH ? "true" : "false") +
+            ", \"software\":" + String(emergencyReleaseButtonFlag ? "true" : "false") + "}";
+    json += "}";
 
-  // Create a JSON-formatted string
-  String json = "{";
-  json += "\"trainIsApproaching\": {\"hardware\":" + String(trainIsApproachingHardware ? "true" : "false") +
-          ", \"software\":" + String(trainIsApproachingFlag ? "true" : "false") + "},";
-  json += "\"doorProximitySensor\": {\"hardware\":" + String(doorProximitySensorHardware ? "true" : "false") +
-          ", \"software\":" + String(doorProximitySensorFlag ? "true" : "false") + "},";
-  json += "\"hindranceObstacleDetection\": {\"hardware\":" + String(hindranceObstacleDetectionHardware ? "true" : "false") +
-          ", \"software\":" + String(hindranceObstacleDetectionFlag ? "true" : "false") + "},";
-  json += "\"emergencyReleaseButton\": {\"hardware\":" + String(emergencyReleaseButtonHardware ? "true" : "false") +
-          ", \"software\":" + String(emergencyReleaseButtonFlag ? "true" : "false") + "}";
-  json += "}";
-
-  return json;
+    return json;
 }
+
 
 
 void NextState(States newState) {
@@ -414,7 +396,7 @@ void StateMachine() {
         Serial.println("Emergency Open 2");
         TurnOnLight(0);
       }
-      else if ((digitalRead(doorProximitySensor) == HIGH || doorProximitySensorFlag == true) && (SafetyInterlock() == true)){
+      else if ((doorProximitySensorFlag == true) && (SafetyInterlock() == true)){
         //need to add some delay to make sure the train is in the correct position
         TurnOnLight(0);
         NextState(DOOR_OPENING);

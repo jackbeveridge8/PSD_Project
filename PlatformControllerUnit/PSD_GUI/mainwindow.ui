@@ -103,9 +103,9 @@
        <widget class="QPushButton" name="btnHindranceObstacle">
         <property name="geometry">
          <rect>
-          <x>310</x>
+          <x>300</x>
           <y>120</y>
-          <width>241</width>
+          <width>231</width>
           <height>51</height>
          </rect>
         </property>
@@ -117,7 +117,19 @@
         </property>
         <property name="styleSheet">
          <string notr="true">#btnHindranceObstacle {
-    background-color: white; 
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnHindranceObstacle[state=&quot;inactive&quot;] {
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnHindranceObstacle[state=&quot;active&quot;] {
+    background-color: white;
     color: black; 
     border-radius: 15px;
 }
@@ -139,7 +151,7 @@
          <rect>
           <x>40</x>
           <y>120</y>
-          <width>241</width>
+          <width>231</width>
           <height>51</height>
          </rect>
         </property>
@@ -151,7 +163,19 @@
         </property>
         <property name="styleSheet">
          <string notr="true">#btnTrainApproaching {
-    background-color: white; 
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnTrainApproaching[state=&quot;inactive&quot;] {
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnTrainApproaching[state=&quot;active&quot;] {
+    background-color: white;
     color: black; 
     border-radius: 15px;
 }
@@ -173,7 +197,7 @@
          <rect>
           <x>40</x>
           <y>200</y>
-          <width>241</width>
+          <width>231</width>
           <height>51</height>
          </rect>
         </property>
@@ -185,7 +209,19 @@
         </property>
         <property name="styleSheet">
          <string notr="true">#btnDoorProximitySensor {
-    background-color: white; 
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnDoorProximitySensor[state=&quot;inactive&quot;] {
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnDoorProximitySensor[state=&quot;active&quot;] {
+    background-color: white;
     color: black; 
     border-radius: 15px;
 }
@@ -205,9 +241,9 @@
        <widget class="QPushButton" name="btnToggleDebugLED">
         <property name="geometry">
          <rect>
-          <x>310</x>
+          <x>300</x>
           <y>280</y>
-          <width>241</width>
+          <width>231</width>
           <height>51</height>
          </rect>
         </property>
@@ -219,7 +255,19 @@
         </property>
         <property name="styleSheet">
          <string notr="true">#btnToggleDebugLED {
-    background-color: white; 
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnToggleDebugLED[state=&quot;inactive&quot;] {
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnToggleDebugLED[state=&quot;active&quot;] {
+    background-color: white;
     color: black; 
     border-radius: 15px;
 }
@@ -241,7 +289,7 @@
          <rect>
           <x>40</x>
           <y>280</y>
-          <width>241</width>
+          <width>231</width>
           <height>51</height>
          </rect>
         </property>
@@ -253,7 +301,19 @@
         </property>
         <property name="styleSheet">
          <string notr="true">#btnEmergencyRelease {
-    background-color: white; 
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnEmergencyRelease[state=&quot;inactive&quot;] {
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnEmergencyRelease[state=&quot;active&quot;] {
+    background-color: white;
     color: black; 
     border-radius: 15px;
 }
@@ -273,9 +333,9 @@
        <widget class="QPushButton" name="btnFireMode">
         <property name="geometry">
          <rect>
-          <x>310</x>
+          <x>300</x>
           <y>200</y>
-          <width>241</width>
+          <width>231</width>
           <height>51</height>
          </rect>
         </property>
@@ -287,7 +347,19 @@
         </property>
         <property name="styleSheet">
          <string notr="true">#btnFireMode {
-    background-color: white; 
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnFireMode[state=&quot;inactive&quot;] {
+    background-color: rgba(255, 255, 255, 125);
+    color: black; 
+    border-radius: 15px;
+}
+
+#btnFireMode[state=&quot;active&quot;] {
+    background-color: white;
     color: black; 
     border-radius: 15px;
 }

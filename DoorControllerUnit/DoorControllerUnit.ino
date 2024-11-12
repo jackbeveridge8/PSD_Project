@@ -20,7 +20,6 @@
     #define motorCWSpin 15 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
     #define motorCCWSpin 4 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
     #define magLockClose 5 //locking device of door // 2 maglocks one for open one for closed
-    #define magLockOpen 18 //locking device of door // 2 maglocks one for open one for closed
     #define audibleSpeaker 19 //alerts of door status
     #define doorStatusLightR 21 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
     #define doorStatusLightB 22 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber
@@ -44,7 +43,6 @@
     #define motorCWSpin 15 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
     #define motorCCWSpin 4 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
     #define magLockClose 5 //locking device of door // 2 maglocks one for open one for closed
-    #define magLockOpen 18 //locking device of door // 2 maglocks one for open one for closed
     #define audibleSpeaker 19 //alerts of door status
     #define doorStatusLightR 21 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
     #define doorStatusLightB 22 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber
@@ -109,7 +107,6 @@ void setup() {
   pinMode(motorCWSpin, OUTPUT);
   pinMode(motorCCWSpin, OUTPUT);
   pinMode(magLockClose, OUTPUT);
-  pinMode(magLockOpen, OUTPUT);
   ledcAttach(audibleSpeaker, 1000, 8);
   pinMode(doorStatusLightR, OUTPUT);
   pinMode(doorStatusLightB, OUTPUT);
@@ -124,7 +121,6 @@ void setup() {
   digitalWrite(motorCWSpin, LOW);
   digitalWrite(motorCCWSpin, LOW);
   digitalWrite(magLockClose, HIGH);
-  digitalWrite(magLockOpen, LOW);
   ledcWrite(audibleSpeaker, 0);
   digitalWrite(doorStatusLightR, LOW);
   digitalWrite(doorStatusLightB, LOW);
@@ -457,7 +453,6 @@ void StateMachine() {
         //go to door is open state
       if (digitalRead(doorPositionLimitSwitchOpen) == HIGH){
         digitalWrite(motorCWSpin, LOW); //power off the motor
-        digitalWrite(magLockOpen, HIGH); //turn on the maglocks at the ends of the door to hold doors open
         NextState(DOOR_IS_OPEN);
         Serial.println(millis());
         Serial.println("Door is Open: waiting 10 seconds for passengers to board");
@@ -514,7 +509,6 @@ void StateMachine() {
       //Do in this state
         //close door by activating motor
         //unlock maglock
-      digitalWrite(magLockOpen, LOW);//disengages power of end locks to unlock the lock so door can move
       digitalWrite(motorCCWSpin, HIGH); //power motor to close doors
       FlashLight(1); //visualy alert door is closing with flashing red light
       SpeakerAlert(); //Audibly alert door is closing
@@ -586,7 +580,6 @@ void StateMachine() {
         //go to door is open state
       if (digitalRead(doorPositionLimitSwitchOpen) == HIGH){
         digitalWrite(motorCWSpin, LOW); //power off the motor
-        digitalWrite(magLockOpen, HIGH); //turn on the maglocks at the ends of the door to hold doors open
         NextState(DOOR_IS_OPEN);
         Serial.println(millis());
         Serial.println("Door is open after emergency release pressed");
@@ -604,7 +597,6 @@ void StateMachine() {
       //Do in this state
         //close door by activating motor
         //unlock maglock
-      digitalWrite(magLockOpen, LOW);//disengages power of end locks to unlock the lock so door can move
       digitalWrite(motorCCWSpin, HIGH); //power motor to close doors
       FlashLight(1); //visualy alert door is closing with flashing red light
       SpeakerAlert(); //Audibly alert door is closing
@@ -632,7 +624,6 @@ void StateMachine() {
         // Stop all operations in case of emergency
       digitalWrite(motorCWSpin, LOW);
       digitalWrite(motorCCWSpin, LOW);
-      digitalWrite(magLockOpen, LOW);
       digitalWrite(magLockClose, LOW);
       SpeakerAlert();
       FlashLight(1);

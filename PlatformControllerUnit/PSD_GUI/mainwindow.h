@@ -24,9 +24,9 @@ private slots:
     void on_btnEmergencyRelease_clicked();
     void handleNetworkReply(QNetworkReply *reply);
     void updateState();
-    void updateCircleLightStatus();
     void on_btnToggleDebugLED_clicked();
     void updateInputStates();
+    void on_btnFireMode_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -40,10 +40,9 @@ private:
     bool hindranceObstacle;
     bool emergencyRelease;
     bool debugLedStatus;
+    bool fireMode;
 
-    void requestDebugLEDState();
     void parseInputStatesJSON(const QString& jsonString);
-    void applyShadowEffect();
 };
 
 #endif // MAINWINDOW_H

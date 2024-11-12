@@ -2,28 +2,57 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-const char* ssid = "TelstraA4B191";  // Replace with your WiFi SSID
-const char* password = "3dsxbhme2h";  // Replace with your WiFi password
+#define HENRY
+
+#ifdef JACK
+    const char* ssid = "TelstraA4B191";  // Replace with your WiFi SSID
+    const char* password = "3dsxbhme2h";  // Replace with your WiFi password
+
+    #define debugLED 13 // Specify the GPIO pin number for the LED
+
+    // Input Pin Definitions
+    #define doorPositionLimitSwitchOpen 27 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
+    #define doorPositionLimitSwitchClose 26 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
+    #define hindranceObstacleDetection 25 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
+    #define emergencyReleaseButton 33 // Emergency stop button if door malfunctions to release the locking mechanism
+
+    // Output Pin Definitions
+    #define motorCWSpin 15 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
+    #define motorCCWSpin 4 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
+    #define magLockClose 5 //locking device of door // 2 maglocks one for open one for closed
+    #define magLockOpen 18 //locking device of door // 2 maglocks one for open one for closed
+    #define audibleSpeaker 19 //alerts of door status
+    #define doorStatusLightR 21 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
+    #define doorStatusLightB 22 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber
+    #define doorStatusLightG 23 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Green
+    #define systemStatusLED 2 //flashing LED to indicate system is working and running, if not flashing that indication that something is wrong
+#endif
+
+#ifdef HENRY
+    const char* ssid = "Endora Fan Club";  // Replace with your WiFi SSID
+    const char* password = "stinkygirl";  // Replace with your WiFi password
+
+    #define debugLED 13 // Specify the GPIO pin number for the LED
+
+    // Input Pin Definitions
+    #define doorPositionLimitSwitchOpen 27 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
+    #define doorPositionLimitSwitchClose 26 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
+    #define hindranceObstacleDetection 25 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
+    #define emergencyReleaseButton 33 // Emergency stop button if door malfunctions to release the locking mechanism
+
+    // Output Pin Definitions
+    #define motorCWSpin 15 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
+    #define motorCCWSpin 4 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
+    #define magLockClose 5 //locking device of door // 2 maglocks one for open one for closed
+    #define magLockOpen 18 //locking device of door // 2 maglocks one for open one for closed
+    #define audibleSpeaker 19 //alerts of door status
+    #define doorStatusLightR 21 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
+    #define doorStatusLightB 22 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber
+    #define doorStatusLightG 23 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Green
+    #define systemStatusLED 2 //flashing LED to indicate system is working and running, if not flashing that indication that something is wrong
+#endif
 
 AsyncWebServer server(80);
-#define debugLED 13 // Specify the GPIO pin number for the LED
-
-// Input Pin Definitions
-#define doorPositionLimitSwitchOpen 27 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
-#define doorPositionLimitSwitchClose 26 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
-#define hindranceObstacleDetection 25 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
-#define emergencyReleaseButton 33 // Emergency stop button if door malfunctions to release the locking mechanism
-
-// Output Pin Definitions
-#define motorCWSpin 15 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
-#define motorCCWSpin 4 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
-#define magLockClose 5 //locking device of door // 2 maglocks one for open one for closed
-#define magLockOpen 18 //locking device of door // 2 maglocks one for open one for closed
-#define audibleSpeaker 19 //alerts of door status
-#define doorStatusLightR 21 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
-#define doorStatusLightB 22 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber
-#define doorStatusLightG 23 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Green
-#define systemStatusLED 2 //flashing LED to indicate system is working and running, if not flashing that indication that something is wrong
 
 //add global variables here
 bool doorOpeningflag = false;
@@ -36,7 +65,11 @@ bool fireModeActiveflag = false;
 unsigned long doorOpenTime = 0;
 const long openDuration = 10000;  // 10 seconds
 int remainingTime = 1;
+
 bool speakerOn = false;
+static unsigned long lastFlashTime = 0;
+static unsigned long lastSpeakerTime = 0;
+
 
 enum States {
   IDLE,
@@ -253,7 +286,7 @@ void NextState(States newState) {
 
 void FlashLight(int colour) {
   // Toggle the light for flashing
-  static unsigned long lastFlashTime = 0;
+
   if (millis() - lastFlashTime >= 500) {
     lastFlashTime = millis();
     if (colour == 1) {
@@ -307,10 +340,9 @@ void TurnOnLight(int colour) {
 void SpeakerAlert() {
   // Toggle the speaker to high
   // need more complex logic than simple high command such as specific frequency to omit
-  static unsigned long lastTime = 0;
   if (millis() - lastTime >= 500) {
-    lastTime = millis();
-    if (speakerOn == false) {
+    lastSpeakerTime = millis();
+    if (lastSpeakerTime == false) {
       ledcWrite(audibleSpeaker, 128);
       speakerOn = true;
     } else {

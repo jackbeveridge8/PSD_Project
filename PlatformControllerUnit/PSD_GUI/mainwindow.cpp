@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     , doorProximitySensor(false)
     , hindranceObstacle(false)
     , emergencyRelease(false)
+    , fireMode(false)
     , debugLedStatus(false)
 {
     ui->setupUi(this);
@@ -29,9 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnHindranceObstacle, &QPushButton::clicked, this, &MainWindow::on_btnHindranceObstacle_clicked);
     connect(ui->btnEmergencyRelease, &QPushButton::clicked, this, &MainWindow::on_btnEmergencyRelease_clicked);
     connect(ui->btnToggleDebugLED, &QPushButton::clicked, this, &MainWindow::on_btnToggleDebugLED_clicked);
-
-    requestDebugLEDState();
-
+    connect(ui->btnFireMode, &QPushButton::clicked, this, &MainWindow::on_btnFireMode_clicked);
 
     // Set up a timer to periodically update the state
     timer = new QTimer(this);
@@ -46,48 +45,49 @@ MainWindow::~MainWindow() {
 // Slot implementations
 void MainWindow::on_btnTrainApproaching_clicked() {
     trainApproaching = !trainApproaching;
-    if (trainApproaching == false) {
-        ui->lblTrainIsApproachingState->setText("false");
-    } else {
-        ui->lblTrainIsApproachingState->setText("true");
-    }
-
-    QString url = esp32_ip + "/setInput?pin=13&value=" + (trainApproaching ? "HIGH" : "LOW");
+    QString url = esp32_ip + "/setInput?pin=12&value=" + (trainApproaching ? "HIGH" : "LOW");
     networkManager->get(QNetworkRequest(QUrl(url)));
 }
 
 void MainWindow::on_btnDoorProximitySensor_clicked() {
     doorProximitySensor = !doorProximitySensor;
-    if (doorProximitySensor == false) {
+    /*if (doorProximitySensor == false) {
         ui->lblDoorProximitySensorState->setText("false");
     } else {
         ui->lblDoorProximitySensorState->setText("true");
-    }
+    }*/
     QString url = esp32_ip + "/setInput?pin=14&value=" + (doorProximitySensor ? "HIGH" : "LOW");
     networkManager->get(QNetworkRequest(QUrl(url)));
 }
 
 void MainWindow::on_btnHindranceObstacle_clicked() {
     hindranceObstacle = !hindranceObstacle;
-    if (hindranceObstacle == false) {
+    /*if (hindranceObstacle == false) {
         ui->lblHindranceObstacleState->setText("false");
     } else {
         ui->lblHindranceObstacleState->setText("true");
-    }
+    }*/
     QString url = esp32_ip + "/setInput?pin=25&value=" + (hindranceObstacle ? "HIGH" : "LOW");
     networkManager->get(QNetworkRequest(QUrl(url)));
 }
 
 void MainWindow::on_btnEmergencyRelease_clicked() {
     emergencyRelease = !emergencyRelease;
-    if (emergencyRelease == false) {
+    /*if (emergencyRelease == false) {
         ui->lblEmergencyReleaseState->setText("false");
     } else {
         ui->lblEmergencyReleaseState->setText("true");
-    }
+    }*/
     QString url = esp32_ip + "/setInput?pin=33&value=" + (emergencyRelease ? "HIGH" : "LOW");
     networkManager->get(QNetworkRequest(QUrl(url)));
 }
+
+void MainWindow::on_btnFireMode_clicked() {
+    fireMode = !fireMode;
+    QString url = esp32_ip + "/setInput?pin=1&value=" + (fireMode ? "HIGH" : "LOW");
+    networkManager->get(QNetworkRequest(QUrl(url)));
+}
+
 
 void MainWindow::updateInputStates() {
     qDebug() << "Updating input states...";
@@ -120,76 +120,73 @@ void MainWindow::updateState() {
         if (reply->error() == QNetworkReply::NoError) {
             QString state = QString::fromUtf8(reply->readAll());
             if (state == "IDLE") {
-                ui->lblCurrentState->setText("CLOSED");
+                ui->DoorsClosingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsClosedWidget->setStyleSheet("background-color: #3d5466; border-radius: 10px;");
+                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->PlatformEmptyWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
+                ui->DoorsOfflineWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else if (state == "TRAIN_APPROACHING") {
-                ui->lblCurrentState->setText("CLOSED");
+                ui->TrainApproachingWidget->setStyleSheet("background-color: #3d5466; border-radius: 10px;");
+                ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else if (state == "DOOR_OPENING") {
-                ui->lblCurrentState->setText("OPENING");
+                ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsOpeningWidget->setStyleSheet("background-color: #8b8958; border-radius: 10px;");
+                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->TrainApproachingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->TrainPresentWidget->setStyleSheet("background-color: #4d8458; border-radius: 10px;");
             } else if (state == "DOOR_IS_OPEN") {
-                ui->lblCurrentState->setText("OPEN");
+                ui->DoorsOpeningWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsOpenWidget->setStyleSheet("background-color: #4d8458; border-radius: 10px;");
+                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsOfflineWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else if (state == "DOOR_CLOSING") {
-                ui->lblCurrentState->setText("CLOSING");
+                ui->DoorsOpenWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsClosingWidget->setStyleSheet("background-color: #8b7158; border-radius: 10px;");
+                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else if (state == "OBSTACLE_DETECTED") {
-                ui->lblCurrentState->setText("OBSTACLE DETECTED");
+                ui->DoorsObstructedWidget->setStyleSheet("background-color: #915252; border-radius: 10px;");
             } else if (state == "EMERGENCY_OPEN") {
-                ui->lblCurrentState->setText("EMERGENCY OPEN");
+                ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsOpeningWidget->setStyleSheet("background-color: #915252; border-radius: 10px;");
+                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else if (state == "EMERGENCY_CLOSE") {
-                ui->lblCurrentState->setText("EMERGENCY CLOSE");
+                ui->DoorsOpeningWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsClosingWidget->setStyleSheet("background-color: #915252; border-radius: 10px;");
+                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else if (state == "FIRE_MODE") {
-                ui->lblCurrentState->setText("FIRE MODE");
+                ui->DoorsOfflineWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
+                ui->DoorsClosingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsOpeningWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsOpenWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             } else {
-                ui->lblCurrentState->setText("Error...");
+                ui->DoorsOfflineWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
+                ui->DoorsClosingWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsOpeningWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsOpenWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             }
-            updateCircleLightStatus();
         } else {
-            ui->lblCurrentState->setText("Error retrieving state");
+            ui->DoorsOfflineWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
             qDebug() << "Error:" << reply->errorString();
         }
         reply->deleteLater();
     });
 }
 
-void MainWindow::updateCircleLightStatus() {
-    QString state = ui->lblCurrentState->text();
-    if (state == "CLOSED") {
-        ui->CircleLightStatus->setStyleSheet("background-color: red; border-radius: 15px;");
-    } else if (state == "OPENING" || state == "OPEN") {
-        ui->CircleLightStatus->setStyleSheet("background-color: green; border-radius: 15px;");
-    } else if (state == "OBSTACLE DETECTED") {
-        ui->CircleLightStatus->setStyleSheet("background-color: orange; border-radius: 15px;");
-    } else {
-        ui->CircleLightStatus->setStyleSheet("background-color: red; border-radius: 15px;");
-    }
-}
-
 
 void MainWindow::on_btnToggleDebugLED_clicked() {
-    static bool debugLEDState = false;
-    debugLEDState = !debugLEDState;
-
-    ui->btnToggleDebugLED->setText(debugLedStatus ? "Turn Debug LED Off" : "Turn Debug LED On");
-
-    QString url = esp32_ip + "/toggleDebugLED?state=" + (debugLedStatus ? "ON" : "OFF");
-    QNetworkReply *reply = networkManager->get(QNetworkRequest(QUrl(url)));
-    connect(reply, &QNetworkReply::finished, [reply]() {
-        if (reply->error() == QNetworkReply::NoError) {
-            // Optionally handle successful response
-        } else {
-            qDebug() << "Network Error:" << reply->errorString();
-        }
-        reply->deleteLater();
-    });
     debugLedStatus = !debugLedStatus;
-}
-
-void MainWindow::requestDebugLEDState() {
-    QString url = esp32_ip + "/getDebugLEDState";
+    QString url = esp32_ip + "/toggleDebugLED?state=" + (debugLedStatus ? "ON" : "OFF");
     QNetworkReply *reply = networkManager->get(QNetworkRequest(QUrl(url)));
     connect(reply, &QNetworkReply::finished, [this, reply]() {
         if (reply->error() == QNetworkReply::NoError) {
+            // Optionally, parse ESP32 response here
             QString response = QString::fromUtf8(reply->readAll()).trimmed();
-            bool debugLEDState = (response == "ON");
-            ui->btnToggleDebugLED->setText(debugLEDState ? "Turn Debug LED Off" : "Turn Debug LED On");
+            debugLedStatus = (response == "ON");
         } else {
             qDebug() << "Network Error:" << reply->errorString();
         }
@@ -206,32 +203,26 @@ void MainWindow::parseInputStatesJSON(const QString& jsonString) {
         // Extract input states
         auto updateStateLabel = [this, &jsonObj](const QString& inputName, QLabel* label) {
             QJsonObject inputObj = jsonObj.value(inputName).toObject();
-            bool hardwareState = inputObj.value("hardware").toBool();
-            bool softwareState = inputObj.value("software").toBool();
-            QString stateText = QString("Hardware: %1 | Software: %2")
-                                    .arg(hardwareState ? "HIGH" : "LOW")
-                                    .arg(softwareState ? "HIGH" : "LOW");
+            bool softwareState = inputObj.value("software").toBool();  // Only software now
+            QString stateText = QString("Software: %1").arg(softwareState ? "HIGH" : "LOW");
             label->setText(stateText);
         };
 
         // Update labels
+        /*
         updateStateLabel("trainIsApproaching", ui->lblTrainIsApproachingState);
         updateStateLabel("doorProximitySensor", ui->lblDoorProximitySensorState);
         updateStateLabel("hindranceObstacleDetection", ui->lblHindranceObstacleState);
         updateStateLabel("emergencyReleaseButton", ui->lblEmergencyReleaseState);
+        */
     } else {
         qDebug() << "Invalid JSON received for input states.";
     }
 }
 
-void MainWindow::applyShadowEffect() {
-    QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(this);
-    shadowEffect->setBlurRadius(20);  // Customize this
-    shadowEffect->setOffset(10, 10);    // Customize this
-    shadowEffect->setColor(Qt::black);  // You can also use QColor with RGB or hex
 
-    ui->DoorDisplayWidget->setGraphicsEffect(shadowEffect);
-}
+
+
 
 
 

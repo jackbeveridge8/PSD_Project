@@ -43,6 +43,8 @@ private:
     bool fireMode;
 
     void parseInputStatesJSON(const QString& jsonString);
+
+    void clearWidgetColours();
 };
 
 #endif // MAINWINDOW_H

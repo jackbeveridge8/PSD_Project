@@ -36,13 +36,13 @@
     // Input Pin Definitions
     #define doorPositionLimitSwitchOpen 27 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
     #define doorPositionLimitSwitchClose 26 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
-    #define hindranceObstacleDetection 25 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
-    #define emergencyReleaseButton 33 // Emergency stop button if door malfunctions to release the locking mechanism
+    #define hindranceObstacleDetection 34 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
+    #define emergencyReleaseButton 23 // Emergency stop button if door malfunctions to release the locking mechanism
 
     // Output Pin Definitions
-    #define motorCWSpin 15 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
-    #define motorCCWSpin 4 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
-    #define magLockClose 5 //locking device of door // 2 maglocks one for open one for closed
+    #define motorCWSpin 25 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
+    #define motorCCWSpin 33 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
+    #define magLockClose 32 //locking device of door // 2 maglocks one for open one for closed
     #define audibleSpeaker 19 //alerts of door status
     #define doorStatusLightR 21 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
     #define doorStatusLightB 22 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber
@@ -67,6 +67,9 @@ int remainingTime = 1;
 bool speakerOn = false;
 static unsigned long lastFlashTime = 0;
 static unsigned long lastSpeakerTime = 0;
+static unsigned long flashRate = 500;
+static unsigned long speakerRate = 500;
+
 
 
 enum States {
@@ -283,7 +286,7 @@ void NextState(States newState) {
 void FlashLight(int colour) {
   // Toggle the light for flashing
 
-  if (millis() - lastFlashTime >= 500) {
+  if (millis() - lastFlashTime >= flashRate) {
     lastFlashTime = millis();
     if (colour == 1) {
       digitalWrite(doorStatusLightR, !digitalRead(doorStatusLightR));
@@ -336,7 +339,7 @@ void TurnOnLight(int colour) {
 void SpeakerAlert() {
   // Toggle the speaker to high
   // need more complex logic than simple high command such as specific frequency to omit
-  if (millis() - lastTime >= 500) {
+  if (millis() - lastSpeakerTime >= speakerRate) {
     lastSpeakerTime = millis();
     if (lastSpeakerTime == false) {
       ledcWrite(audibleSpeaker, 128);

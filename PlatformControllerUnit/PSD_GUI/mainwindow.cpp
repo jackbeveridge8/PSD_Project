@@ -13,12 +13,19 @@
 #include <QDir>
 #include <QCoreApplication>
 
+#define HENRY
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , networkManager(new QNetworkAccessManager(this))
+#ifdef HENRY
+    , esp32_ip("http://192.168.1.114")  // Replace with your ESP32's IP
+#endif
+#ifdef JACK
     , esp32_ip("http://192.168.0.225")  // Replace with your ESP32's IP
+#endif
     , trainApproaching(false)
     , doorProximitySensor(false)
     , hindranceObstacle(false)

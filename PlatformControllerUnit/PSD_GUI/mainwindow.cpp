@@ -8,7 +8,8 @@
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QDebug>
-#include <QGraphicsDropShadowEffect>
+#include <QStyle>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -23,14 +24,6 @@ MainWindow::MainWindow(QWidget *parent)
     , debugLedStatus(false)
 {
     ui->setupUi(this);
-
-    // Connect button signals to slots
-    connect(ui->btnTrainApproaching, &QPushButton::clicked, this, &MainWindow::on_btnTrainApproaching_clicked);
-    connect(ui->btnDoorProximitySensor, &QPushButton::clicked, this, &MainWindow::on_btnDoorProximitySensor_clicked);
-    connect(ui->btnHindranceObstacle, &QPushButton::clicked, this, &MainWindow::on_btnHindranceObstacle_clicked);
-    connect(ui->btnEmergencyRelease, &QPushButton::clicked, this, &MainWindow::on_btnEmergencyRelease_clicked);
-    connect(ui->btnToggleDebugLED, &QPushButton::clicked, this, &MainWindow::on_btnToggleDebugLED_clicked);
-    connect(ui->btnFireMode, &QPushButton::clicked, this, &MainWindow::on_btnFireMode_clicked);
 
     // Set up a timer to periodically update the state
     timer = new QTimer(this);
@@ -47,45 +40,45 @@ void MainWindow::on_btnTrainApproaching_clicked() {
     trainApproaching = !trainApproaching;
     QString url = esp32_ip + "/setInput?pin=12&value=" + (trainApproaching ? "HIGH" : "LOW");
     networkManager->get(QNetworkRequest(QUrl(url)));
+    ui->btnTrainApproaching->setProperty("state", trainApproaching ? "active" : "inactive");
+    ui->btnTrainApproaching->style()->unpolish(ui->btnTrainApproaching);
+    ui->btnTrainApproaching->style()->polish(ui->btnTrainApproaching);
 }
 
 void MainWindow::on_btnDoorProximitySensor_clicked() {
     doorProximitySensor = !doorProximitySensor;
-    /*if (doorProximitySensor == false) {
-        ui->lblDoorProximitySensorState->setText("false");
-    } else {
-        ui->lblDoorProximitySensorState->setText("true");
-    }*/
     QString url = esp32_ip + "/setInput?pin=14&value=" + (doorProximitySensor ? "HIGH" : "LOW");
     networkManager->get(QNetworkRequest(QUrl(url)));
+    ui->btnDoorProximitySensor->setProperty("state", doorProximitySensor ? "active" : "inactive");
+    ui->btnDoorProximitySensor->style()->unpolish(ui->btnDoorProximitySensor);
+    ui->btnDoorProximitySensor->style()->polish(ui->btnDoorProximitySensor);
 }
 
 void MainWindow::on_btnHindranceObstacle_clicked() {
     hindranceObstacle = !hindranceObstacle;
-    /*if (hindranceObstacle == false) {
-        ui->lblHindranceObstacleState->setText("false");
-    } else {
-        ui->lblHindranceObstacleState->setText("true");
-    }*/
     QString url = esp32_ip + "/setInput?pin=25&value=" + (hindranceObstacle ? "HIGH" : "LOW");
     networkManager->get(QNetworkRequest(QUrl(url)));
+    ui->btnHindranceObstacle->setProperty("state", hindranceObstacle ? "active" : "inactive");
+    ui->btnHindranceObstacle->style()->unpolish(ui->btnHindranceObstacle);
+    ui->btnHindranceObstacle->style()->polish(ui->btnHindranceObstacle);
 }
 
 void MainWindow::on_btnEmergencyRelease_clicked() {
     emergencyRelease = !emergencyRelease;
-    /*if (emergencyRelease == false) {
-        ui->lblEmergencyReleaseState->setText("false");
-    } else {
-        ui->lblEmergencyReleaseState->setText("true");
-    }*/
     QString url = esp32_ip + "/setInput?pin=33&value=" + (emergencyRelease ? "HIGH" : "LOW");
     networkManager->get(QNetworkRequest(QUrl(url)));
+    ui->btnEmergencyRelease->setProperty("state", emergencyRelease ? "active" : "inactive");
+    ui->btnEmergencyRelease->style()->unpolish(ui->btnEmergencyRelease);
+    ui->btnEmergencyRelease->style()->polish(ui->btnEmergencyRelease);
 }
 
 void MainWindow::on_btnFireMode_clicked() {
     fireMode = !fireMode;
     QString url = esp32_ip + "/setInput?pin=1&value=" + (fireMode ? "HIGH" : "LOW");
     networkManager->get(QNetworkRequest(QUrl(url)));
+    ui->btnFireMode->setProperty("state", fireMode ? "active" : "inactive");
+    ui->btnFireMode->style()->unpolish(ui->btnFireMode);
+    ui->btnFireMode->style()->polish(ui->btnFireMode);
 }
 
 
@@ -124,8 +117,15 @@ void MainWindow::updateState() {
                 ui->DoorsClosedWidget->setStyleSheet("background-color: #3d5466; border-radius: 10px;");
                 ui->DoorsObstructedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
                 ui->TrainPresentWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
-                ui->PlatformEmptyWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
                 ui->DoorsOfflineWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                if (doorProximitySensor) {
+                    ui->TrainDepartWidget->setStyleSheet("background-color: #8b7158; border-radius: 10px;");
+                    ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                }
+                else {
+                    ui->PlatformEmptyWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
+                    ui->TrainDepartWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
+                }
             } else if (state == "TRAIN_APPROACHING") {
                 ui->TrainApproachingWidget->setStyleSheet("background-color: #3d5466; border-radius: 10px;");
                 ui->PlatformEmptyWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
@@ -180,18 +180,17 @@ void MainWindow::updateState() {
 
 void MainWindow::on_btnToggleDebugLED_clicked() {
     debugLedStatus = !debugLedStatus;
-    QString url = esp32_ip + "/toggleDebugLED?state=" + (debugLedStatus ? "ON" : "OFF");
-    QNetworkReply *reply = networkManager->get(QNetworkRequest(QUrl(url)));
-    connect(reply, &QNetworkReply::finished, [this, reply]() {
-        if (reply->error() == QNetworkReply::NoError) {
-            // Optionally, parse ESP32 response here
-            QString response = QString::fromUtf8(reply->readAll()).trimmed();
-            debugLedStatus = (response == "ON");
-        } else {
-            qDebug() << "Network Error:" << reply->errorString();
-        }
-        reply->deleteLater();
-    });
+    qDebug() << "Button debugLed clicked";
+    QString url = esp32_ip + "/toggleDebugLED?state=";
+    if (debugLedStatus) {
+        url += "ON";
+    } else {
+        url += "OFF";
+    }
+    qDebug() << debugLedStatus;
+    ui->btnToggleDebugLED->setProperty("state", debugLedStatus ? "active" : "inactive");
+    ui->btnToggleDebugLED->style()->unpolish(ui->btnToggleDebugLED);
+    ui->btnToggleDebugLED->style()->polish(ui->btnToggleDebugLED);
 }
 
 void MainWindow::parseInputStatesJSON(const QString& jsonString) {
@@ -207,14 +206,6 @@ void MainWindow::parseInputStatesJSON(const QString& jsonString) {
             QString stateText = QString("Software: %1").arg(softwareState ? "HIGH" : "LOW");
             label->setText(stateText);
         };
-
-        // Update labels
-        /*
-        updateStateLabel("trainIsApproaching", ui->lblTrainIsApproachingState);
-        updateStateLabel("doorProximitySensor", ui->lblDoorProximitySensorState);
-        updateStateLabel("hindranceObstacleDetection", ui->lblHindranceObstacleState);
-        updateStateLabel("emergencyReleaseButton", ui->lblEmergencyReleaseState);
-        */
     } else {
         qDebug() << "Invalid JSON received for input states.";
     }

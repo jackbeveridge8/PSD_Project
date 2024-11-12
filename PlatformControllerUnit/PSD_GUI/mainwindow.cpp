@@ -9,6 +9,9 @@
 #include <QJsonValue>
 #include <QDebug>
 #include <QStyle>
+#include <QPixmap>
+#include <QDir>
+#include <QCoreApplication>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -29,6 +32,17 @@ MainWindow::MainWindow(QWidget *parent)
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::updateState);
     timer->start(1000);  // Update every second
+
+    ui->lbl1->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/Closed.png"));
+    ui->lbl2->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/opening.png"));
+    ui->lbl3->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/Open.png"));
+    ui->lbl4->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/closing.png"));
+    ui->lbl5->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/obstructed.png"));
+    ui->lbl6->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/Offline.png"));
+    ui->lbl7->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/approach.png"));
+    ui->lbl8->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/present.png"));
+    ui->lbl9->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/depart.png"));
+    ui->lbl10->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/Offline.png"));
 }
 
 MainWindow::~MainWindow() {
@@ -171,6 +185,7 @@ void MainWindow::updateState() {
             }
         } else {
             ui->DoorsOfflineWidget->setStyleSheet("background-color: #2e2d2d; border-radius: 10px;");
+            ui->DoorsClosedWidget->setStyleSheet("background-color: #747474; border-radius: 10px;");
             qDebug() << "Error:" << reply->errorString();
         }
         reply->deleteLater();

@@ -632,6 +632,9 @@ void StateMachine() {
       FlashLight(1);
 
       //How to get to next state
+      if (!fireModeActiveflag){
+        NextState(IDLE);
+      }
       break;
   }
 }

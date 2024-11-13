@@ -382,6 +382,9 @@ bool ObstacleCleared(){
   if (digitalRead(hindranceObstacleDetection) == LOW || hindranceObstacleDetectionFlag == false){
     return true;
   }
+  else {
+    return false;
+  }
 }
 
 void StateMachine() {

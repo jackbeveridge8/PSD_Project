@@ -61,14 +61,19 @@ bool hindranceObstacleDetectionFlag = false;
 bool emergencyReleaseButtonFlag = false;
 bool fireModeActiveflag = false;
 unsigned long doorOpenTime = 0;
-const long openDuration = 10000;  // 10 seconds
+unsigned long doorWarningTime = 0;
+
+const long openDuration = 8000;  // 8 seconds
+
+const long warningDuration = 4000;  // 4 seconds
+
 int remainingTime = 1;
 
 bool speakerOn = false;
 static unsigned long lastFlashTime = 0;
 static unsigned long lastSpeakerTime = 0;
 static unsigned long flashRate = 500;
-static unsigned long speakerRate = 500;
+static unsigned long speakerRate = 250;
 
 
 
@@ -77,6 +82,7 @@ enum States {
   TRAIN_APPROACHING,
   DOOR_OPENING,
   DOOR_IS_OPEN,
+  DOOR_PREPARING_TO_CLOSE,
   DOOR_CLOSING,
   OBSTACLE_DETECTED,
   EMERGENCY_OPEN,
@@ -101,8 +107,8 @@ void setup() {
   Serial.begin(115200);
 
   // Input Pins
-  pinMode(doorPositionLimitSwitchOpen, INPUT);
-  pinMode(doorPositionLimitSwitchClose, INPUT);
+  pinMode(doorPositionLimitSwitchOpen, INPUT_PULLUP);
+  pinMode(doorPositionLimitSwitchClose, INPUT_PULLUP);
   pinMode(hindranceObstacleDetection, INPUT);
   pinMode(emergencyReleaseButton, INPUT);
 
@@ -110,7 +116,7 @@ void setup() {
   pinMode(motorCWSpin, OUTPUT);
   pinMode(motorCCWSpin, OUTPUT);
   pinMode(magLockClose, OUTPUT);
-  ledcAttach(audibleSpeaker, 1000, 8);
+  pinMode(audibleSpeaker, OUTPUT);
   pinMode(doorStatusLightR, OUTPUT);
   pinMode(doorStatusLightB, OUTPUT);
   pinMode(doorStatusLightG, OUTPUT);
@@ -124,7 +130,7 @@ void setup() {
   digitalWrite(motorCWSpin, LOW);
   digitalWrite(motorCCWSpin, LOW);
   digitalWrite(magLockClose, HIGH);
-  ledcWrite(audibleSpeaker, 0);
+  digitalWrite(audibleSpeaker, LOW);
   digitalWrite(doorStatusLightR, LOW);
   digitalWrite(doorStatusLightB, LOW);
   digitalWrite(doorStatusLightG, LOW);
@@ -341,11 +347,11 @@ void SpeakerAlert() {
   // need more complex logic than simple high command such as specific frequency to omit
   if (millis() - lastSpeakerTime >= speakerRate) {
     lastSpeakerTime = millis();
-    if (lastSpeakerTime == false) {
-      ledcWrite(audibleSpeaker, 128);
+    if (speakerOn == false) {
+      digitalWrite(audibleSpeaker, HIGH);
       speakerOn = true;
     } else {
-      ledcWrite(audibleSpeaker, 0);
+      digitalWrite(audibleSpeaker, LOW);
       speakerOn = false;
     }
     
@@ -396,6 +402,8 @@ void StateMachine() {
         //doorClosed = true;
         //doorOpen = false;
         doorClosingflag = false;
+        speakerOn = false;
+
         TurnOnLight(1);
 
       //How to get to next state
@@ -463,15 +471,15 @@ void StateMachine() {
         Serial.println(millis());
         Serial.println("Door is Open: waiting 10 seconds for passengers to board");
         TurnOnLight(0);
-        ledcWrite(audibleSpeaker, 0);
+        digitalWrite(audibleSpeaker, LOW);
       }
-      else if(digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true){
+      /*else if(digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true){
         NextState(OBSTACLE_DETECTED);
         Serial.println(millis());
         Serial.println("Obstacle Detected");
         TurnOnLight(0);
         ledcWrite(audibleSpeaker, 0);
-      }
+      }*/
       break;
 
     case DOOR_IS_OPEN:
@@ -481,6 +489,8 @@ void StateMachine() {
       //doorOpen = true;
       //doorClosed = false;
       doorOpeningflag = false;
+      speakerOn = false;
+
 
       //How to get to next state
         // Wait for closing condition or emergency
@@ -502,8 +512,36 @@ void StateMachine() {
         TurnOnLight(0);
       }
       else if (millis() - doorOpenTime >= openDuration) {
-        NextState(DOOR_CLOSING);  // Transition to closing state after 5 seconds
+        NextState(DOOR_PREPARING_TO_CLOSE);  // Transition to closing state after 5 seconds
         doorOpenTime = 0;  // Reset for the next open cycle
+        remainingTime = 0;
+        Serial.println(millis());
+        Serial.println("Door is preparing to close");
+        TurnOnLight(0);
+      }
+      break;
+
+       case DOOR_PREPARING_TO_CLOSE:
+      //Do in this state
+       //Make door status light solid Green;
+      FlashLight(1); //visualy alert door is closing with flashing red light
+      SpeakerAlert(); //Audibly alert door is closing
+
+      //How to get to next state
+        // Wait for closing condition or emergency
+      if (doorWarningTime == 0) {
+        doorWarningTime = millis();  // Record when the door opened
+      }
+      
+      if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true){
+        NextState(EMERGENCY_CLOSE);
+        Serial.println(millis());
+        Serial.println("Emergency Close");
+        TurnOnLight(0);
+      }
+      else if (millis() - doorWarningTime >= warningDuration) {
+        NextState(DOOR_CLOSING);  // Transition to closing state after 5 seconds
+        doorWarningTime = 0;  // Reset for the next open cycle
         remainingTime = 0;
         Serial.println(millis());
         Serial.println("Door is Closing");
@@ -530,14 +568,14 @@ void StateMachine() {
         Serial.println(millis());
         Serial.println("Door is closed back to IDLE");
         digitalWrite(doorStatusLightR, LOW);
-        ledcWrite(audibleSpeaker, 0);
+        digitalWrite(audibleSpeaker, LOW);
       }
       else if(digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true){
         NextState(OBSTACLE_DETECTED);
         Serial.println(millis());
         Serial.println("Obstacle Detected 2");
         TurnOnLight(0);
-        ledcWrite(audibleSpeaker, 0);
+        digitalWrite(audibleSpeaker, LOW);
       }
       break;
 
@@ -551,7 +589,7 @@ void StateMachine() {
       //How to get to next state
       if (ObstacleCleared()){
         digitalWrite(doorStatusLightB, LOW);
-        ledcWrite(audibleSpeaker, 0);
+        digitalWrite(audibleSpeaker, LOW);
         if (doorOpeningflag == true){
           NextState(DOOR_OPENING);
           Serial.println(millis());
@@ -590,7 +628,7 @@ void StateMachine() {
         Serial.println(millis());
         Serial.println("Door is open after emergency release pressed");
         digitalWrite(doorStatusLightG, LOW);
-        ledcWrite(audibleSpeaker, 0);
+        digitalWrite(audibleSpeaker, LOW);
       }
       /*else if(digitalRead(hindranceObstacleDetection) == HIGH){
         NextState(OBSTACLE_DETECTED);
@@ -618,7 +656,7 @@ void StateMachine() {
         Serial.println(millis());
         Serial.println("Door is closing after Emergency Release pressed");
         digitalWrite(doorStatusLightR, LOW);
-        ledcWrite(audibleSpeaker, 0);
+        digitalWrite(audibleSpeaker, LOW);
       }
       /*else if(digitalRead(hindranceObstacleDetection) == HIGH){
         NextState(OBSTACLE_DETECTED);

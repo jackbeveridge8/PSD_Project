@@ -252,12 +252,8 @@ void MainWindow::clearWidgetColours() {
 void MainWindow::on_btnToggleDebugLED_clicked() {
     debugLedStatus = !debugLedStatus;
     qDebug() << "Button debugLed clicked";
-    QString url = esp32_ip + "/toggleDebugLED?state=";
-    if (debugLedStatus) {
-        url += "ON";
-    } else {
-        url += "OFF";
-    }
+    QString url = esp32_ip + "/toggleDebugLED?state=" + (debugLedStatus ? "ON" : "OFF");
+    networkManager->get(QNetworkRequest(QUrl(url)));
     qDebug() << debugLedStatus;
     ui->btnToggleDebugLED->setProperty("state", debugLedStatus ? "active" : "inactive");
     ui->btnToggleDebugLED->style()->unpolish(ui->btnToggleDebugLED);

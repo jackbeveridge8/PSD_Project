@@ -12,6 +12,14 @@
 #include <QPixmap>
 #include <QDir>
 #include <QCoreApplication>
+#include <QSerialPort>
+#include <QSerialPortInfo>
+#include <QByteArray>
+#include <QTextEdit>
+
+QSerialPort *serialPort;
+QTextEdit *terminal;
+QByteArray serialBuffer;
 
 #define HENRY
 
@@ -50,9 +58,20 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lbl8->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/present.png"));
     ui->lbl9->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/depart.png"));
     ui->lbl10->setPixmap(QPixmap("/Users/jackbeveridge/Library/CloudStorage/OneDrive-SwinburneUniversity/2024/PSDGUI/PSD_GUI/images/Offline.png"));
+
+    terminal = ui->terminalText;  // Or a QLabel for simpler messages
+
+    setupSerialPort();
+
+    /*foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
+        qDebug() << "Port:" << info.portName();
+    }*/
 }
 
 MainWindow::~MainWindow() {
+    if (serialPort->isOpen()) {
+        serialPort->close();  // Ensure the port is closed properly
+    }
     delete ui;
 }
 
@@ -278,7 +297,37 @@ void MainWindow::parseInputStatesJSON(const QString& jsonString) {
     }
 }
 
+void MainWindow::setupSerialPort() {
+    serialPort = new QSerialPort(this);
 
+    // Select the correct port (use QSerialPortInfo for available ports)
+    serialPort->setPortName("cu.SLAB_USBtoUART");  //Replace with the correct port for the Microcontroller, uncomment loop top of page to list all ports on computer
+    serialPort->setBaudRate(QSerialPort::Baud115200);
+
+    if (serialPort->open(QIODevice::ReadOnly)) {
+        connect(serialPort, &QSerialPort::readyRead, this, &MainWindow::readSerialData);
+        qDebug() << "Serial port opened successfully.";
+    } else {
+        qDebug() << "Failed to open serial port:" << serialPort->errorString();
+    }
+}
+
+void MainWindow::readSerialData() {
+    // Read all available data from the serial port
+    serialBuffer.append(serialPort->readAll());
+
+    // Process complete lines
+    while (serialBuffer.contains('\n')) {
+        int newlineIndex = serialBuffer.indexOf('\n');
+
+        // Extract a single line (up to and including \n)
+        QByteArray line = serialBuffer.left(newlineIndex + 1);
+        serialBuffer.remove(0, newlineIndex + 1);
+
+        // Append the line to the QTextEdit
+        ui->terminalText->append(QString::fromUtf8(line.trimmed()));  // Remove extra spaces/newlines
+    }
+}
 
 
 

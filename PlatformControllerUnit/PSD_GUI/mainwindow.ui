@@ -124,6 +124,7 @@
             <property name="styleSheet">
              <string notr="true">#TopBanner_2 {
 	Background-color: rgb(35, 35, 35);
+	border-bottom: 1px solid rgba(255, 255, 255, 100);
 }</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -171,7 +172,6 @@
             <property name="styleSheet">
              <string notr="true">#Background {
 	Background-color: rgb(51, 51, 51);
-	border-top: 1px solid rgba(255, 255, 255, 100);
 }</string>
             </property>
             <widget class="QWidget" name="ButtonsWidget" native="true">
@@ -1728,6 +1728,16 @@
               </property>
               <property name="text">
                <string>SYSTEM LOG</string>
+              </property>
+             </widget>
+             <widget class="QTextEdit" name="terminalText">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>80</y>
+                <width>501</width>
+                <height>291</height>
+               </rect>
               </property>
              </widget>
             </widget>

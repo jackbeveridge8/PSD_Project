@@ -17,7 +17,7 @@
     #define emergencyReleaseButton 33 // Emergency stop button if door malfunctions to release the locking mechanism
 
     // Output Pin Definitions
-    #define motorCWSpin 15 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
+    #define motorCWSpin 15 //DC or AC motor to l door movement // 2 Pins to switch the polarity // Clockwise
     #define motorCCWSpin 4 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
     #define magLockClose 5 //locking device of door // 2 maglocks one for open one for closed
     #define audibleSpeaker 19 //alerts of door status
@@ -36,13 +36,13 @@
     // Input Pin Definitions
     #define doorPositionLimitSwitchOpen 27 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
     #define doorPositionLimitSwitchClose 26 //Detects Door open, close or opening // might be logic function instead of physical device // limit switch 1 for open, 1 for closed. // work hand in hand with motor
-    #define hindranceObstacleDetection 34 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
-    #define emergencyReleaseButton 23 // Emergency stop button if door malfunctions to release the locking mechanism
+    #define hindranceObstacleDetection 25 //Infared or laser or scales to detect obstacle in oath of door // still figuring out hindrance obstacle detection 
+    #define emergencyReleaseButton 33 // Emergency stop button if door malfunctions to release the locking mechanism
 
     // Output Pin Definitions
-    #define motorCWSpin 25 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
-    #define motorCCWSpin 33 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
-    #define magLockClose 32 //locking device of door // 2 maglocks one for open one for closed
+    #define motorCWSpin 15 //DC or AC motor to control door movement // 2 Pins to switch the polarity // Clockwise
+    #define motorCCWSpin 4 //DC or AC motor to control door movement // 2 Pins to switch the polarity //Anticlockwise
+    #define magLockClose 5 //locking device of door // 2 maglocks one for open one for closed
     #define audibleSpeaker 19 //alerts of door status
     #define doorStatusLightR 21 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Red
     #define doorStatusLightB 22 //visual alert of door status // 1 LED with 3 pins to control 3 different lights //Yellow Amber
@@ -101,8 +101,8 @@ void setup() {
   Serial.begin(115200);
 
   // Input Pins
-  pinMode(doorPositionLimitSwitchOpen, INPUT_PULLUP);
-  pinMode(doorPositionLimitSwitchClose, INPUT_PULLUP);
+  pinMode(doorPositionLimitSwitchOpen, INPUT);
+  pinMode(doorPositionLimitSwitchClose, INPUT);
   pinMode(hindranceObstacleDetection, INPUT);
   pinMode(emergencyReleaseButton, INPUT);
 
@@ -362,7 +362,7 @@ bool SafetyInterlock() {
   }
 
   // Check if the door position limit switches are not faulty
-  if (digitalRead(doorPositionLimitSwitchOpen) == HIGH && digitalRead(doorPositionLimitSwitchClose) == HIGH) {
+  if (digitalRead(doorPositionLimitSwitchOpen) == LOW && digitalRead(doorPositionLimitSwitchClose) == LOW) {
     Serial.println("Safety interlock: Something is wrong with the door position sensors");
     return false; 
   }
@@ -457,7 +457,7 @@ void StateMachine() {
         //stop motor
         //power the open maglocks to keep the door in open position
         //go to door is open state
-      if (digitalRead(doorPositionLimitSwitchOpen) == HIGH){
+      if (digitalRead(doorPositionLimitSwitchOpen) == LOW){
         digitalWrite(motorCWSpin, LOW); //power off the motor
         NextState(DOOR_IS_OPEN);
         Serial.println(millis());
@@ -523,7 +523,7 @@ void StateMachine() {
       //How to get to next state
         //if limitswitch closed is detected then stop motor
         //activate maglock
-      if (digitalRead(doorPositionLimitSwitchClose) == HIGH){
+      if (digitalRead(doorPositionLimitSwitchClose) == LOW){
         digitalWrite(motorCCWSpin, LOW); //power off the motor
         digitalWrite(magLockClose, HIGH); //power maglocks to lock the doors
         NextState(IDLE);
@@ -584,7 +584,7 @@ void StateMachine() {
         //stop motor
         //power the open maglocks to keep the door in open position
         //go to door is open state
-      if (digitalRead(doorPositionLimitSwitchOpen) == HIGH){
+      if (digitalRead(doorPositionLimitSwitchOpen) == LOW){
         digitalWrite(motorCWSpin, LOW); //power off the motor
         NextState(DOOR_IS_OPEN);
         Serial.println(millis());
@@ -611,7 +611,7 @@ void StateMachine() {
       //How to get to next state
         //if limitswitch closed is detected then stop motor
         //activate maglock
-      if (digitalRead(doorPositionLimitSwitchClose) == HIGH){
+      if (digitalRead(doorPositionLimitSwitchClose) == LOW){
         digitalWrite(motorCCWSpin, LOW); //power off the motor
         digitalWrite(magLockClose, HIGH); //power maglocks to lock the doors
         NextState(IDLE);

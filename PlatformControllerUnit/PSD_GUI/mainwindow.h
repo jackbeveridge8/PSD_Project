@@ -45,6 +45,8 @@ private:
     void parseInputStatesJSON(const QString& jsonString);
 
     void clearWidgetColours();
+    void setupSerialPort();
+    void readSerialData();
 };
 
 #endif // MAINWINDOW_H

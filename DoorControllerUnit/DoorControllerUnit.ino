@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <AsyncWebSocket.h>
 
 #define HENRY
 
@@ -51,6 +52,7 @@
 #endif
 
 AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
 
 //add global variables here
 bool doorOpeningflag = false;
@@ -137,7 +139,19 @@ void setup() {
   digitalWrite(systemStatusLED, LOW);
 
   wifiSetup();
+  
+  ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+      if (type == WS_EVT_CONNECT) {
+          client->text("Connected to WebSocket!");
+      } else if (type == WS_EVT_DISCONNECT) {
+          Serial.println("Client disconnected");
+          ws.textAll("Client disconnected");
+      }
+  });
 
+  server.addHandler(&ws);
+  server.begin();
+  
 }
 
 
@@ -151,17 +165,25 @@ void loop() {
   
 }
 
+
 void wifiSetup(){
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi");
+  ws.textAll("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+    ws.textAll(".");
   }
   Serial.println("\nConnected to WiFi");
+  ws.textAll("\nConnected to WiFi\n");
   Serial.print("IP Address: ");
+  ws.textAll("IP Address: ");
   Serial.println(WiFi.localIP());
+  String IP = WiFi.localIP().toString();
+  ws.textAll(IP);
+  ws.textAll("\n");
 
   // Configure server routes
   server.on("/setInput", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -196,21 +218,17 @@ void wifiSetup(){
       }
       request->send(200, "text/plain", "Debug LED state changed");
       Serial.println(state);
+      ws.textAll("Debug LED: " + state);
+      ws.textAll("\n");
     } else {
       request->send(400, "text/plain", "Bad Request: 'state' parameter missing");
     }
   });
 
-  server.on("/getDebugLEDState", HTTP_GET, [](AsyncWebServerRequest *request){
-  bool ledState = digitalRead(debugLED);
-  String response = ledState ? "ON" : "OFF";
-  request->send(200, "text/plain", response);
-  });
-
-
   // Start server
   server.begin();
-  Serial.println("HTTP server started");
+  Serial.println("HTTP server started\n");
+  ws.textAll("HTTP server started\n");
 }
 
 void setInputValue(int pin, String value) {
@@ -239,11 +257,12 @@ void setInputValue(int pin, String value) {
       break;
     default:
       Serial.println("Invalid pin");
+      ws.textAll("Invalid pin\n");
       break;
   }
   Serial.printf("Input %d set to %s\n", pin, value.c_str());
+  ws.textAll("Input " + String(pin) + " set to " + value + "\n");
 }
-
 String getStateString() {
   switch (currentState) {
     case IDLE:
@@ -364,28 +383,33 @@ bool SafetyInterlock() {
   // Check if there's an obstacle detected
   if (digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true) {
     Serial.println("Safety interlock: Obstacle detected, door cannot operate.");
+    ws.textAll("Safety interlock: Obstacle detected, door cannot operate.\n");
     return false;  // Obstacle detected, cannot proceed
   }
 
   // Check if the door position limit switches are not faulty
-  if (digitalRead(doorPositionLimitSwitchOpen) == LOW && digitalRead(doorPositionLimitSwitchClose) == LOW) {
+  if (digitalRead(doorPositionLimitSwitchOpen) == HIGH && digitalRead(doorPositionLimitSwitchClose) == HIGH) {
     Serial.println("Safety interlock: Something is wrong with the door position sensors");
+    ws.textAll("Safety interlock: Something is wrong with the door position sensors\n");
     return false; 
   }
 
   if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true) {
   Serial.println("Safety interlock: Emergency release activated.");
+  ws.textAll("Safety interlock: Emergency release activated.\n");
   return false;  // Emergency release prevents door operation
   }
 
   // If all checks pass, return true
   Serial.println("Safety interlock: All checks passed, door can operate.");
+  ws.textAll("Safety interlock: All checks passed, door can operate.\n");
   return true;
 }
 
 bool ObstacleCleared(){
   //check obstacle is removed somehow
-  if (digitalRead(hindranceObstacleDetection) == LOW || hindranceObstacleDetectionFlag == false){
+  //digitalRead(hindranceObstacleDetection) == LOW
+  if (hindranceObstacleDetectionFlag == false){
     return true;
   }
   else {
@@ -411,12 +435,18 @@ void StateMachine() {
         //if emergency release button is detected, move to emergency open state
       if (trainIsApproachingFlag == true){
         NextState(TRAIN_APPROACHING);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Train Approaching");
+        ws.textAll("Train Approaching\n");
         TurnOnLight(0);
       }
       else if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true){
         NextState(EMERGENCY_OPEN);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Emergency Open");
+        ws.textAll("Emergency Open\n");
         TurnOnLight(0);
       }
       break;
@@ -432,14 +462,20 @@ void StateMachine() {
         //trigger Door Opening State
       if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true){
         NextState(EMERGENCY_OPEN);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Emergency Open 2");
+        ws.textAll("Emergency Open\n");
         TurnOnLight(0);
       }
       else if ((doorProximitySensorFlag == true) && (SafetyInterlock() == true)){
         //need to add some delay to make sure the train is in the correct position
         TurnOnLight(0);
         NextState(DOOR_OPENING);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Door is Opening");
+        ws.textAll("Door is Opening\n");
       }
       break;
 
@@ -464,16 +500,22 @@ void StateMachine() {
       if (digitalRead(doorPositionLimitSwitchOpen) == LOW){
         digitalWrite(motorCWSpin, LOW); //power off the motor
         NextState(DOOR_IS_OPEN);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Door is Open: waiting 10 seconds for passengers to board");
+        ws.textAll("Door is Open: waiting 10 seconds for passengers to board\n");
         TurnOnLight(0);
         digitalWrite(audibleSpeaker, LOW);
       }
-      /*else if(digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true){
+      else if(digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true){
         NextState(OBSTACLE_DETECTED);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Obstacle Detected");
+        ws.textAll("Obstacle Detected\n");
         TurnOnLight(0);
         ledcWrite(audibleSpeaker, 0);
-      }*/
+      }
       break;
 
     case DOOR_IS_OPEN:
@@ -501,14 +543,20 @@ void StateMachine() {
 
       if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true){
         NextState(EMERGENCY_CLOSE);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Emergency Close");
+        ws.textAll("Emergency Close\n");
         TurnOnLight(0);
       }
       else if (millis() - doorOpenTime >= openDuration) {
         NextState(DOOR_PREPARING_TO_CLOSE);  // Transition to closing state after 5 seconds
         doorOpenTime = 0;  // Reset for the next open cycle
         remainingTime = 0;
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Door is preparing to close");
+        ws.textAll("Door is preparing to close\n");
         TurnOnLight(0);
       }
       break;
@@ -527,14 +575,20 @@ void StateMachine() {
       
       if (digitalRead(emergencyReleaseButton) == HIGH || emergencyReleaseButtonFlag == true){
         NextState(EMERGENCY_CLOSE);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Emergency Close");
+        ws.textAll("Emergency Close\n");
         TurnOnLight(0);
       }
       else if (millis() - doorWarningTime >= warningDuration) {
         NextState(DOOR_CLOSING);  // Transition to closing state after 5 seconds
         doorWarningTime = 0;  // Reset for the next open cycle
         remainingTime = 0;
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Door is Closing");
+        ws.textAll("Door is Closing\n");
         TurnOnLight(0);
       }
       break;
@@ -555,7 +609,10 @@ void StateMachine() {
         digitalWrite(motorCCWSpin, LOW); //power off the motor
         digitalWrite(magLockClose, HIGH); //power maglocks to lock the doors
         NextState(IDLE);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Door is closed back to IDLE");
+        ws.textAll("Door is closed back to IDLE\n");
         digitalWrite(doorStatusLightR, LOW);
         digitalWrite(audibleSpeaker, LOW);
         delay(1000);
@@ -563,7 +620,10 @@ void StateMachine() {
       }
       else if(digitalRead(hindranceObstacleDetection) == HIGH || hindranceObstacleDetectionFlag == true){
         NextState(OBSTACLE_DETECTED);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Obstacle Detected 2");
+        ws.textAll("Obstacle Detected\n");
         TurnOnLight(0);
         digitalWrite(audibleSpeaker, LOW);
       }
@@ -582,11 +642,17 @@ void StateMachine() {
         digitalWrite(audibleSpeaker, LOW);
         if (doorOpeningflag == true){
           NextState(DOOR_OPENING);
+          Serial.println(millis());
+          ws.textAll("Time Stamp: " + String(millis()) + "\n");
           Serial.println("Door is opening after Obstacle cleared");
+          ws.textAll("Door is opening after Obstacle cleared\n");
         }
         else if (doorClosingflag == true){
           NextState(DOOR_CLOSING);
+          Serial.println(millis());
+          ws.textAll("Time Stamp: " + String(millis()) + "\n");
           Serial.println("Door is closing after Obstacle cleared");
+          ws.textAll("Door is closing after Obstacle cleared\n");
         }
       }
       
@@ -611,14 +677,14 @@ void StateMachine() {
         //power the open maglocks to keep the door in open position
         //go to door is open state
       if (digitalRead(doorPositionLimitSwitchOpen) == LOW){
-        delay(2);
-        if (digitalRead(doorPositionLimitSwitchOpen) == LOW){
-          digitalWrite(motorCWSpin, LOW); //power off the motor
-          NextState(DOOR_IS_OPEN);
-          Serial.println("Door is open after emergency release pressed");
-          digitalWrite(doorStatusLightG, LOW);
-          digitalWrite(audibleSpeaker, LOW);
-          }
+        digitalWrite(motorCWSpin, LOW); //power off the motor
+        NextState(DOOR_IS_OPEN);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
+        Serial.println("Door is open after emergency release pressed");
+        ws.textAll("Door is open after emergency release pressed\n");
+        digitalWrite(doorStatusLightG, LOW);
+        digitalWrite(audibleSpeaker, LOW);
       }
       /*else if(digitalRead(hindranceObstacleDetection) == HIGH){
         NextState(OBSTACLE_DETECTED);
@@ -642,7 +708,10 @@ void StateMachine() {
         digitalWrite(motorCCWSpin, LOW); //power off the motor
         digitalWrite(magLockClose, HIGH); //power maglocks to lock the doors
         NextState(IDLE);
+        Serial.println(millis());
+        ws.textAll("Time Stamp: " + String(millis()) + "\n");
         Serial.println("Door is closing after Emergency Release pressed");
+        ws.textAll("Door is closing after Emergency Release pressed\n");
         digitalWrite(doorStatusLightR, LOW);
         digitalWrite(audibleSpeaker, LOW);
       }

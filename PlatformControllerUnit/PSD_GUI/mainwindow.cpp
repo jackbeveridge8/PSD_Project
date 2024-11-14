@@ -16,6 +16,7 @@
 #include <QSerialPortInfo>
 #include <QByteArray>
 #include <QTextEdit>
+#include <QWebSocket>
 
 QSerialPort *serialPort;
 QTextEdit *terminal;
@@ -61,7 +62,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     terminal = ui->terminalText;  // Or a QLabel for simpler messages
 
-    setupSerialPort();
+    //setupSerialPort(); //use if want to connect terminal messages over usb
+    setupWebSocket();
 
     /*foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
         qDebug() << "Port:" << info.portName();
@@ -297,6 +299,7 @@ void MainWindow::parseInputStatesJSON(const QString& jsonString) {
     }
 }
 
+/*
 void MainWindow::setupSerialPort() {
     serialPort = new QSerialPort(this);
 
@@ -327,6 +330,32 @@ void MainWindow::readSerialData() {
         // Append the line to the QTextEdit
         ui->terminalText->append(QString::fromUtf8(line.trimmed()));  // Remove extra spaces/newlines
     }
+}
+*/
+
+void MainWindow::setupWebSocket() {
+    QWebSocket *webSocket = new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this);
+
+    // Handle connection established
+    connect(webSocket, &QWebSocket::connected, this, [this]() {
+        qDebug() << "WebSocket connected";
+        ui->terminalText->append("Connected to DCU Terminal");
+    });
+
+    // Handle incoming messages
+    connect(webSocket, &QWebSocket::textMessageReceived, this, [this](const QString &message) {
+        qDebug() << "Message received:" << message;
+        ui->terminalText->append(message.trimmed());
+    });
+
+    // Handle connection closed
+    connect(webSocket, &QWebSocket::disconnected, this, [this]() {
+        qDebug() << "WebSocket disconnected";
+        ui->terminalText->append("Disconnected from WebSocket server");
+    });
+
+    // Open WebSocket connection
+    webSocket->open(QUrl("ws://192.168.0.225/ws"));  // Replace with your ESP32 WebSocket URL
 }
 
 

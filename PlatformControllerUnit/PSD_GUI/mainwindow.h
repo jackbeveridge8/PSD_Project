@@ -47,6 +47,7 @@ private:
     void clearWidgetColours();
     void setupSerialPort();
     void readSerialData();
+    void setupWebSocket();
 };
 
 #endif // MAINWINDOW_H
